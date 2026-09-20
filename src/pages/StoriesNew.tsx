@@ -1,3 +1,6 @@
+import StoryListPage from '../components/StoryListPage'
+import { fetchStoriesNew } from '../api/stories'
+
 export default function StoriesNew() {
-  return <h1>StoriesNew</h1>
+  return <StoryListPage fetchPage={fetchStoriesNew} />
 }

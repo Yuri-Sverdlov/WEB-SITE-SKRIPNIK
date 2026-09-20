@@ -1,3 +1,6 @@
+import StoryListPage from '../components/StoryListPage'
+import { fetchStoriesPopular } from '../api/stories'
+
 export default function StoriesPopular() {
-  return <h1>StoriesPopular</h1>
+  return <StoryListPage fetchPage={fetchStoriesPopular} />
 }
