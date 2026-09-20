@@ -1,6 +1,5 @@
-# Local Office artifacts
+# Word lock files (temp, not content)
 ~$*
-*.docx
 
 # Logs
 logs
