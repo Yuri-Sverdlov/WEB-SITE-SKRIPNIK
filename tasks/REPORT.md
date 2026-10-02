@@ -172,5 +172,35 @@ export default function Home() {
 Факт (вывод команд — ниже, вписан после push):
 
 ```
-(git log -1 --oneline и подтверждение push)
+$ git pull origin main
+From https://github.com/Yuri-Sverdlov/WEB-SITE-SKRIPNIK
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+
+$ git add supabase/ src/pages/Home.tsx tasks/REPORT.md tasks/TASK.md CONTEXT.md
+(warning: LF will be replaced by CRLF — косметика git на Windows, см. DEV-NOTES)
+
+$ git status --short
+M  CONTEXT.md
+M  src/pages/Home.tsx
+A  supabase/inspect.sql
+A  supabase/migrations/0001_baseline.sql
+A  "supabase/Вывод inspect-sql.txt"
+M  tasks/REPORT.md
+
+$ git commit -m "TASK-006: inspect, baseline SQL, Home без дампа, вывод audit"
+[main ce0bbb0] TASK-006: inspect, baseline SQL, Home без дампа, вывод audit
+ 6 files changed, 509 insertions(+), 12 deletions(-)
+
+$ git push origin main
+To https://github.com/Yuri-Sverdlov/WEB-SITE-SKRIPNIK.git
+   7114cb6..ce0bbb0  main -> main
+
+$ git log -1 --oneline
+ce0bbb0 TASK-006: inspect, baseline SQL, Home без дампа, вывод audit
+
+$ git rev-parse HEAD                 -> ce0bbb02bb5ff723edacb456a39e36223634548a
+$ git ls-remote origin refs/heads/main -> ce0bbb02bb5ff723edacb456a39e36223634548a  refs/heads/main
 ```
+
+**Push подтверждён:** `origin/main` (проверено по сети, не по локальному ref) = `ce0bbb0` = локальный `HEAD`. Ветка `main` синхронизирована.
