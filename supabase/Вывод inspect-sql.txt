@@ -1,0 +1,50 @@
+-- (1) Таблицы схемы public и признак «включён ли RLS»
+| table_name        | owner    | rls_enabled | rls_forced | approx_rows |
+| ----------------- | -------- | ----------- | ---------- | ----------- |
+| comments          | postgres | true        | false      | -1          |
+| guestbook_entries | postgres | true        | false      | -1          |
+| stories           | postgres | true        | false      | -1          |
+=======================================
+-- (2) Все политики RLS схемы public
+| schemaname | tablename         | policyname                        | roles  | cmd    | permissive | using_expression | with_check_expression  |
+| ---------- | ----------------- | --------------------------------- | ------ | ------ | ---------- | ---------------- | ---------------------- |
+| public     | comments          | Авторизованные добавляют коммент  | public | INSERT | PERMISSIVE | null             | (auth.uid() = user_id) |
+| public     | comments          | Публичное чтение комментариев     | public | SELECT | PERMISSIVE | true             | null                   |
+| public     | guestbook_entries | Авторизованные добавляют записи в | public | INSERT | PERMISSIVE | null             | (auth.uid() = user_id) |
+| public     | guestbook_entries | Публичное чтение гостевой книги   | public | SELECT | PERMISSIVE | true             | null                   |
+| public     | stories           | Публичное чтение рассказов        | public | SELECT | PERMISSIVE | true             | null                   |
+==================================================
+-- (3) Колонки таблицы stories (типы, not null, default)
+| pos | column_name   | data_type                | details | is_nullable | column_default    |
+| --- | ------------- | ------------------------ | ------- | ----------- | ----------------- |
+| 1   | id            | uuid                     |         | NO          | gen_random_uuid() |
+| 2   | title         | text                     |         | NO          | null              |
+| 3   | content       | text                     |         | NO          | null              |
+| 4   | published_at  | timestamp with time zone |         | NO          | now()             |
+| 5   | views_count   | integer                  |         | NO          | 0                 |
+| 6   | tags          | ARRAY                    |         | YES         | '{}'::text[]      |
+| 7   | illustrations | ARRAY                    |         | YES         | '{}'::text[]      |
+| 8   | created_at    | timestamp with time zone |         | NO          | now()             |
+=======================================
+-- (4) Функция increment_story_views: тело, SECURITY DEFINER/INVOKER, search_path
+| oid   | schema_name | function_name         | arguments           | returns | security_definer | volatility | function_config | owner    | full_definition                                                                                                                                                                                                                                                                        |
+| ----- | ----------- | --------------------- | ------------------- | ------- | ---------------- | ---------- | --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 17631 | public      | increment_story_views | story_id_input uuid | void    | true             | v          | null            | postgres | CREATE OR REPLACE FUNCTION public.increment_story_views(story_id_input uuid)<br> RETURNS void<br> LANGUAGE plpgsql<br> SECURITY DEFINER<br>AS $function$<br>begin<br>  update stories<br>  set views_count = views_count + 1<br>  where id = story_id_input;<br>end;<br>$function$<br> |
+============================================================
+-- (4b) Дополнительно: явные права (ACL) на функцию — кто может её вызывать.
+
+| function_name         | acl                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| increment_story_views | =X/postgres<br>postgres=X/postgres<br>anon=X/postgres<br>authenticated=X/postgres<br>service_role=X/postgres |
+============================================================
+
+-- (5) Дополнительно: RLS-флаги одной строкой (краткая сводка) — удобно для отчёта.
+
+| table_name        | rls_enabled | status |
+| ----------------- | ----------- | ------ |
+| comments          | true        | RLS ON |
+| guestbook_entries | true        | RLS ON |
+| stories           | true        | RLS ON |
+
+
+
