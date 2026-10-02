@@ -25,6 +25,15 @@
 - UI-проверки: Playwright (скриншоты), когда указано в TASK
 - Папка: `F:\_MY_PROGRAMMING_3\WEB-SITE-SKRIPNIK`
 
+## Окружение (важно при работе на другом компьютере)
+
+- **`.env.local` не в git** (см. `.gitignore`) — в репозитории его нет. Шаблон: **`.env.example`**.
+  При старте на новом компьютере: `cp .env.example .env.local` (нужны `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY`).
+  Без `.env.local` сайт не подключится к Supabase — списки рассказов будут пустыми / будут ошибки сети.
+- Зависимости: `npm install`. Dev-сервер: `npm run dev` (http://localhost:5173). Проверки: `npm run build`, `npm run lint`.
+- Секреты (`service_role`/secret-ключи, пароли) в репозиторий и в `.env.example` не добавлять.
+
+
 ## Обязанности
 
 1. Выполнить задание из `tasks/TASK.md` в полном объёме.
