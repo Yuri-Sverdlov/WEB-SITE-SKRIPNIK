@@ -1,39 +1,40 @@
 # Отчёт (кодер → архитектор)
 
-**Задание:** TASK-003 — StoryDetail + RPC-счётчик + поиск  
+**Задание:** TASK-004 — регистрация и вход читателей (Supabase Auth)  
 **Дата:** 2026-09-20  
-**Статус:** выполнено
+**Статус:** реализовано; проверки C/D частично заблокированы (см. «Проблемы»)
 
 ---
 
 ## Что сделано
 
-**Новые / изменённые файлы:**
+**Новые файлы:**
 
-### 1. `src/api/stories.ts`
-- Добавлен тип `StoryDetail` (extends `StoryListItem` + `content`, `illustrations`)
-- Добавлена функция `searchStories(page, query)` — `.or(title.ilike.%q%,content.ilike.%q%)` с экранированием `%` и `_`, пагинация `.range()`, сортировка `published_at DESC`
-- Добавлена функция `fetchStoryById(id)` — `select('*').eq('id', id).single()`
-- Добавлена функция `incrementViews(id)` — вызов RPC `increment_story_views({ story_id_input: id })`
+1. `src/api/auth.ts`
+   - `mapAuthError(message)` — перевод типовых ошибок Supabase на русский (неверный пароль, email занят, слабый пароль, не подтверждён, rate limit, некорректный email, сеть)
+   - `signUp`, `signIn`, `signOut`, `resetPassword`
+   - `signUp` обрабатывает «фантомного» пользователя Supabase (пустой `identities` при занятом email) и возвращает `needsEmailConfirmation`, если сессии не дали
 
-### 2. `src/pages/StoryDetail.tsx`
-- Полноценная страница рассказа:
-  - Загрузка по `useParams().id` через `fetchStoryById`
-  - Отображение: title, content (`whitespace-pre-wrap`), tags, published_at (ru-RU), views_count
-  - `illustrations`: если массив непустой — `<img>` для каждого URL
-  - RPC `increment_story_views` вызывается при каждой загрузке, отображаемый счётчик = исходный + 1
-  - Состояния: загрузка, ошибка, «рассказ не найден»
-  - Ссылка «← к списку» на `/stories/all`
+2. `src/contexts/AuthProvider.tsx`
+   - React Context над `supabase.auth.getSession()` + `onAuthStateChange`
+   - `useAuth(): { user, session, loading, signOut }`
+   - `loading === true` до получения первой сессии; отписка от подписки в cleanup
 
-### 3. `src/components/StoriesTabNav.tsx`
-- Добавлен controlled input поиска с `useSearchParams()`
-- При непустом `?q=` заголовок меняется на «Результаты поиска»
-- Табы остаются видимыми; клик по табу очищает поиск
+3. `src/pages/Register.tsx`
+   - Поля email / пароль / повтор пароля
+   - Клиентская валидация: email не пуст, пароль ≥ 6, пароли совпадают
+   - `submitting` → кнопка disabled (anti-double-submit)
+   - Успех: «Проверьте почту…» при включённом confirmation, иначе redirect на `/`
 
-### 4. `src/components/StoryListPage.tsx`
-- Читает `?q=` из URL через `useSearchParams`
-- Когда `query` непустой — вызывает `searchStories(page, query)` вместо `fetchPage`
-- Пагинация работает и в режиме поиска
+4. `src/pages/Login.tsx`
+   - Поля email / пароль, anti-double-submit
+   - Redirect на `location.state.from` или `/`
+   - «Забыли пароль?» → `resetPasswordForEmail` (реализовано, опциональная часть)
+
+**Изменённые файлы:**
+
+5. `src/App.tsx` — импорт `useAuth`; в конце nav: `loading` → «…», `user` → email + кнопка «Выйти», иначе ссылки «Войти» / «Регистрация». Добавлены роуты `/login`, `/register`. Остальные роуты и страницы рассказов не тронуты.
+6. `src/main.tsx` — `<AuthProvider>` внутри `<BrowserRouter>`, снаружи `<App>`.
 
 ## Проверки (полный вывод команд)
 
@@ -45,44 +46,62 @@
 
 vite v8.3.0 building client environment for production...
 transforming...
-✓ 79 modules transformed.
+✓ 83 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                   0.45 kB │ gzip:   0.29 kB
-dist/assets/index-D2QF6nU9.css    8.57 kB │ gzip:   2.58 kB
-dist/assets/index-IYLzzF2s.js   483.20 kB │ gzip: 139.68 kB
+dist/assets/index-BAqAjbsZ.css    9.54 kB │ gzip:   2.74 kB
+dist/assets/index-C-yD5zvc.js   491.54 kB │ gzip: 141.59 kB
 
-✓ built in 895ms
+✓ built in 755ms
 ```
 
-Exit code: **0**.
+Exit code **0**.
 
-### B. StoryDetail
+### npm run lint
 
-1. **Открыт «Первый снег»** (клик по ссылке из списка)
-2. **Видно:** заголовок «Первый снег», дата 18.09.2026, теги ностальгия/зима, контент «Текст рассказа про первый снег...», счётчик просмотров
-3. **Счётчик (проверка RPC):**
-   - Изначально в списке: **150** просмотров
-   - После первого захода на страницу: **151** (150 + 1 от RPC)
-   - После возврата со списка (где уже 151) и повторного захода: **152** (151 + 1)
-   - Итого: **+2** за два refresh — RPC работает корректно
-4. **Консоль браузера:** ошибок нет
+```
+Found 2 warnings and 0 errors.
+Finished in 10ms on 21 files with 116 rules using 32 threads.
+```
 
-### C. Поиск
+Оба warning'а — **унаследованы из TASK-003**, не из этого задания:
+- `src/pages/StoryDetail.tsx:18` — `react(set-state-in-effect)`
+- `src/components/StoryListPage.tsx:28` — `react-hooks(exhaustive-deps)`, мёртвый no-op `useEffect`
 
-| Запрос | Результат |
-|---|---|
-| `?q=снег` | Найден **«Первый снег»** (совпадение в title) |
-| `?q=отцом` | Найден **«Разговор с отцом»** (совпадение в title) |
-| `?q=тестовый` | Найдены **все 15 тестовых** рассказов (совпадение в title) |
-| `?q=` (пустой) | Возврат к обычному списку текущей вкладки |
+Не правил: файлы вне scope TASK-004 (страницы рассказов / их компоненты). Рекомендую отдельным заданием.
 
-**Примечание:** Поиск по «отец» не находит «Разговор с отцом», т.к. ILIKE ищет точную подстроку, а в заголовке стоит форма «отцом» (творительный падеж). Для охвата словоформ нужна морфология (не в рамках этого TASK).
+### Регистрация / вход / выход
+
+- **Email confirmation в проекте Supabase: ВКЛЮЧЕНО.**
+  Регистрация принимается, но `data.session === null` → показывается «Регистрация принята. Проверьте почту — нужно подтвердить email.»
+  Наблюдалось: URL после сабмита остаётся `/register`, в nav по-прежнему «Войти / Регистрация».
+- **Тестовый аккаунт:** `test.hermes.skripnik@gmail.com` / `secret123` — создан, **не подтверждён**.
+  - `example.com` Supabase отклоняет: `Email address "test+hermes4@example.com" is invalid` → на первом прогоне вывелось как «Ошибка: Email address … is invalid». Пробел в маппинге исправлен (добавлено условие `email && is invalid` → «Некорректный email»); перепроверка текста не удалась из-за rate limit (см. ниже).
+- **Ошибка «email занят»:** получить не удалось — повторная регистрация того же email упёрлась в rate limit Supabase и вернула «Слишком много попыток. Попробуйте позже» (маппинг rate limit проверен).
+- **Неверный пароль:** `test.hermes.skripnik@gmail.com` + `wrongpass999` → **«Неверный email или пароль»** ✔
+- **Верный пароль у неподтверждённого:** `secret123` → **«Подтвердите email — проверьте почту»** ✔ (Russian mapping + confirmation flow)
+- **Клиентская валидация:** пароли `secret123` / `different9` → **«Пароли не совпадают»** ✔
+- **user после входа / после выхода:** проверить не удалось (нет подтверждённого аккаунта). Косвенно: при отсутствии сессии nav показывает «Войти / Регистрация», т.е. `useAuth().user === null`, `loading === false` (не «…»).
+
+### Консоль
+
+`js_errors: []`, `total_errors: 0`.
+В `console.log` — только вывод `Home.tsx` (тестовый `console.log` Supabase, помечен в TASK-001 как «не удалять») и `[vite]` сообщения.
 
 ## Проблемы / блокеры
 
-Нет. Все компоненты работают как ожидалось.
+**Блокер (внешний): подтверждение email.** Проект Supabase требует подтверждения email. Регистрация создаёт пользователя, но не даёт сессию. Доступа к почтовому ящику у кодера нет, а Dashboard/SQL трогать запрещено TASK → **проверки C (полный вход) и D (состояние после входа/выхода) выполнить не удалось.**
+
+**Что нужно от архитектора/пользователя** (любой вариант):
+1. подтвердить `test.hermes.skripnik@gmail.com` в Supabase Dashboard (Authentication → Users) — тогда я повторю вход/выход;
+2. временно отключить «Confirm email» (Auth → Settings) — тогда я регистрирую нового и вхожу сразу;
+3. дать доступ к тестовому ящику — кликну ссылку подтверждения сам.
+
+**Найдено и исправлено по ходу:** сообщение Supabase `Email address "…" is invalid` не переводилось — добавлено условие в `mapAuthError`.
+
+**Наблюдение (не блокер):** rate limit Supabase Auth на этом проекте срабатывает очень быстро (несколько запросов с одного IP исчерпывают лимит на минуту+). Это ожидаемое поведение, но учтите при приёмке: серия проверок подряд может дать «Слишком много попыток».
 
 ## Git
 
-Commit/push **не делался** — не запрашивалось в TASK.
+Commit/push **не делался** — по TASK приёмку и push делает архитектор.
