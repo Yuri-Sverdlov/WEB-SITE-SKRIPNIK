@@ -65,7 +65,11 @@ Exit code: **0**
 
 ## Git
 
-(заполняется после commit/push)
+```
+git pull   # Already up to date.
+git push   # 3779f31..ef5d75a  main -> main
+ef5d75a TASK-005: пути [ПК1]/[ПК2], git pull для кодера, решения SPA/Supabase
+```
 
 ---
 
