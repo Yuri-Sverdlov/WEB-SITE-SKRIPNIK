@@ -96,3 +96,17 @@
 **Git:** commit + push в `main` (проверка цепочки на ПК1).
 
 **Следующий шаг:** этап D — комментарии и гостевая книга (бриф консультанта).
+
+---
+
+## 2026-10-03 — TASK-006 (D0) принят
+
+**Участники:** кодер (Hermes), архитектор (приёмка).
+
+**Сделано:** `supabase/inspect.sql`, `Вывод inspect-sql.txt`, `migrations/0001_baseline.sql`; `0002` не требуется; `Home.tsx` без дампа; CONTEXT обновлён; REPORT 176+ строк.
+
+**Git:** `ce0bbb0` (+ `b2102fd` REPORT) на `origin/main`.
+
+**Открыто:** Auth вживую на сайте; TODO колонок comments/guestbook в baseline.
+
+**Следующий шаг:** TASK-007 (0003, сверка схемы, rate limit).
