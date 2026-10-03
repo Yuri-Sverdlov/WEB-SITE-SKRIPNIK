@@ -95,7 +95,6 @@ export default function ReaderMessageForm({
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={4}
-          maxLength={bodyMax}
           className={`${inputClass} resize-y`}
         />
         <p className="text-xs text-gray-400 mt-1">

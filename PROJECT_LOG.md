@@ -146,3 +146,15 @@
 **Git:** `839134f`, `6de7a9a` (кодер); архив `tasks/done/008-story-comments/`.
 
 **Следующий шаг:** TASK-009 — `/guestbook`.
+
+---
+
+## 2026-10-03 — TASK-009 (D3) принят; блок D закрыт
+
+**Участники:** кодер (Hermes), пользователь (живые проверки 1–5), архитектор (hotfix валидации >2000, приёмка, push).
+
+**Сделано:** `/guestbook` — `guestbook.ts`, `GuestBook.tsx`; `validateReaderMessageInput`. Пользователь подтвердил сценарии вошедшего. **Hotfix:** убран `maxLength` на textarea в `ReaderMessageForm` (п. 6 чек-листа).
+
+**Git:** `488817a`, `31d6f3c`; архив `tasks/done/009-guestbook/`. Отчёт консультанту — `tasks/consultant-block-D-report.md`.
+
+**Следующий шаг:** бриф следующего этапа (консультант / пользователь).
