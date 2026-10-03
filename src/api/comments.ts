@@ -41,7 +41,8 @@ export async function fetchComments(storyId: string): Promise<CommentsResult> {
   return { data: (data ?? []) as CommentItem[], error: null }
 }
 
-export function validateCommentInput(authorName: string, body: string): string | null {
+/** Клиентская валидация имени и текста сообщения: комментарии и гостевая (TASK-009) */
+export function validateReaderMessageInput(authorName: string, body: string): string | null {
   const name = authorName.trim()
   const text = body.trim()
 
@@ -65,7 +66,7 @@ export async function insertComment(input: {
   authorName: string
   body: string
 }): Promise<InsertCommentResult> {
-  const invalid = validateCommentInput(input.authorName, input.body)
+  const invalid = validateReaderMessageInput(input.authorName, input.body)
   if (invalid) {
     return { ok: false, message: invalid }
   }
