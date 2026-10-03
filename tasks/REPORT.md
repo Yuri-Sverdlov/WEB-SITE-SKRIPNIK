@@ -115,7 +115,20 @@ Dev-сервер `npm run dev` (localhost:5173), реальный браузер
 По TASK push не делается. Локальный commit — только мои файлы (`src/api/guestbook.ts`, `src/api/comments.ts`, `src/pages/GuestBook.tsx`, `tasks/REPORT.md`):
 
 ```
-(заполнить выводом git log -1 --oneline после commit)
+$ git add src/api/guestbook.ts src/api/comments.ts src/pages/GuestBook.tsx tasks/REPORT.md
+$ git commit -m "TASK-009: гостевая книга /guestbook (лента + форма, переиспользование компонентов)"
+[main 488817a] TASK-009: гостевая книга /guestbook (лента + форма, переиспользование компонентов)
+ 4 files changed, 295 insertions(+), 6 deletions(-)
+ create mode 100644 src/api/guestbook.ts
+
+$ git log -1 --oneline
+488817a TASK-009: гостевая книга /guestbook (лента + форма, переиспользование компонентов)
+
+$ git status --short --branch
+## main...origin/main [ahead 2]
+?? "supabase/блоки (A)–(D)-SQL.txt"   <- вывод пользователя из TASK-007, не коммитил
 ```
+
+Итог: локальные коммиты `488817a` + `REPORT: git hash для TASK-009`, ветка **впереди `origin/main`** — push не делал (по TASK его выполняет архитектор после приёмки).
 
 Не коммитил: `.env.local`, `supabase/блоки (A)–(D)-SQL.txt`, `dist/`.
