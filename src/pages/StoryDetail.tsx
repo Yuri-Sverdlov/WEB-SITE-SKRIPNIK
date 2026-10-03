@@ -1,16 +1,30 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import StoriesTabNav from '../components/StoriesTabNav'
+import ReaderMessageList from '../components/ReaderMessageList'
+import type { ReaderMessage } from '../components/ReaderMessageList'
+import ReaderMessageForm from '../components/ReaderMessageForm'
+import { useAuth } from '../contexts/AuthProvider'
+import { fetchComments, insertComment } from '../api/comments'
+import type { CommentItem } from '../api/comments'
 import { fetchStoryById, incrementViews } from '../api/stories'
 import type { StoryDetail as StoryDetailType } from '../api/stories'
 
 export default function StoryDetail() {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
+  const { user } = useAuth()
   const [story, setStory] = useState<StoryDetailType | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [displayedViews, setDisplayedViews] = useState<number | null>(null)
+
+  const [comments, setComments] = useState<CommentItem[]>([])
+  const [commentsLoading, setCommentsLoading] = useState(true)
+  const [commentsError, setCommentsError] = useState<string | null>(null)
+  const [formSubmitting, setFormSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
     const storyId = id
@@ -66,6 +80,67 @@ export default function StoryDetail() {
       cancelled = true
     }
   }, [id])
+
+  // Лента комментариев: тянется независимо от рассказа, видна и гостям (RLS SELECT всем)
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadComments() {
+      const storyId = id
+      if (!storyId) {
+        setCommentsLoading(false)
+        return
+      }
+
+      setCommentsLoading(true)
+      setCommentsError(null)
+
+      const result = await fetchComments(storyId)
+
+      if (cancelled) return
+
+      setComments(result.data)
+      setCommentsError(result.error)
+      setCommentsLoading(false)
+    }
+
+    loadComments()
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  async function handleSubmitComment(values: {
+    authorName: string
+    body: string
+  }): Promise<boolean> {
+    if (!id || !user) {
+      setFormError('Нужно войти в аккаунт, чтобы оставить комментарий')
+      return false
+    }
+
+    setFormSubmitting(true)
+    setFormError(null)
+
+    const result = await insertComment({
+      storyId: id,
+      userId: user.id,
+      authorName: values.authorName,
+      body: values.body,
+    })
+
+    setFormSubmitting(false)
+
+    if (!result.ok) {
+      setFormError(result.message)
+      return false
+    }
+
+    const refreshed = await fetchComments(id)
+    setComments(refreshed.data)
+    setCommentsError(refreshed.error)
+    return true
+  }
 
   const formatDate = (d: string | null) => {
     if (!d) return '—'
@@ -141,6 +216,48 @@ export default function StoryDetail() {
             </div>
           )}
         </article>
+      )}
+
+      {!loading && story && (
+        <section className="mt-10 border-t border-gray-200 pt-6">
+          <h2 className="text-xl font-semibold mb-4">Комментарии</h2>
+
+          <ReaderMessageList
+            items={comments.map(
+              (c): ReaderMessage => ({
+                id: c.id,
+                authorName: c.author_name,
+                body: c.body,
+                createdAt: c.created_at,
+              }),
+            )}
+            loading={commentsLoading}
+            error={commentsError}
+            emptyText="Комментариев пока нет — оставьте первый."
+          />
+
+          <div className="mt-6">
+            {user ? (
+              <ReaderMessageForm
+                onSubmit={handleSubmitComment}
+                submitting={formSubmitting}
+                error={formError}
+                submitLabel="Отправить комментарий"
+              />
+            ) : (
+              <p className="text-sm text-gray-600">
+                <Link
+                  to="/login"
+                  state={{ from: location.pathname }}
+                  className="text-blue-600 hover:underline"
+                >
+                  Войдите
+                </Link>
+                , чтобы оставить комментарий.
+              </p>
+            )}
+          </div>
+        </section>
       )}
     </div>
   )
