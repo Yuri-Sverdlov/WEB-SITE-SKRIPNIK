@@ -132,7 +132,25 @@ guestbook_entries?select=name                    -> HTTP 400 | column guestbook_
 По TASK push не делается. Локальный commit — только мои файлы (`src/api/comments.ts`, `src/api/messageErrors.ts`, `src/components/ReaderMessageList.tsx`, `src/components/ReaderMessageForm.tsx`, `src/pages/StoryDetail.tsx`, `tasks/REPORT.md`):
 
 ```
-(заполнить выводом git log -1 --oneline после commit)
+$ git add src/api/comments.ts src/api/messageErrors.ts src/components/ReaderMessageList.tsx src/components/ReaderMessageForm.tsx src/pages/StoryDetail.tsx tasks/REPORT.md
+$ git commit -m "TASK-008: комментарии на StoryDetail (лента + форма, переиспользуемые компоненты)"
+[main 839134f] TASK-008: комментарии на StoryDetail (лента + форма, переиспользуемые компоненты)
+ create mode 100644 src/api/comments.ts
+ create mode 100644 src/api/messageErrors.ts
+ create mode 100644 src/components/ReaderMessageList.tsx
+ create mode 100644 src/components/ReaderMessageForm.tsx
+
+$ git log -1 --oneline
+839134f TASK-008: комментарии на StoryDetail (лента + форма, переиспользуемые компоненты)
+
+$ git status --short --branch
+## main...origin/main [ahead 1]
+ M AGENTS.md          <- правки архитектора, НЕ мои
+ M CONTEXT.md         <- правки архитектора, НЕ мои
+ M tasks/TASK.md      <- правка архитектора, НЕ моя
+?? "supabase/блоки (A)–(D)-SQL.txt"   <- вывод пользователя, не коммитил
 ```
+
+Итог: локальный commit `839134f`, ветка **на 1 коммит впереди `origin/main`** — push не делал (по TASK его выполняет архитектор после приёмки).
 
 Не коммитил: `.env.local`, `supabase/блоки (A)–(D)-SQL.txt`, чужие правки `AGENTS.md` / `CONTEXT.md` / `tasks/TASK.md`, `dist/`.
