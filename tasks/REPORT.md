@@ -324,7 +324,22 @@ delete from public.comments where body like 'проверка %';
 Локальный commit только своих файлов (`supabase/migrations/0004_harden_reader_inserts.sql`, `tasks/REPORT.md`):
 
 ```
-(заполнить выводом git log -1 --oneline после commit)
+$ git add supabase/migrations/0004_harden_reader_inserts.sql tasks/REPORT.md
+$ git commit -m "TASK-010: миграция 0004 — hardening INSERT (created_at/is_author_reply) + search_path"
+[main 4d1fa76] TASK-010: миграция 0004 — hardening INSERT (created_at/is_author_reply) + search_path
+ 2 files changed, 461 insertions(+), 3 deletions(-)
+ create mode 100644 supabase/migrations/0004_harden_reader_inserts.sql
+
+$ git log --oneline -3
+4d1fa76 TASK-010: миграция 0004 — hardening INSERT (created_at/is_author_reply) + search_path
+f443c3f TASK-010 выдан: hardening reader INSERT (0004), бриф консультанта
+32cddde Процесс: явный вопрос перед push и отчёт push был/не был
+
+$ git status --short --branch
+## main...origin/main [ahead 3]
+?? "supabase/блоки (A)–(D)-SQL.txt"   <- вывод пользователя, не коммитил
 ```
+
+Push **не делал** (TASK: push — архитектор после приёмки и разрешения пользователя).
 
 Не коммитил: `.env.local`, `supabase/блоки (A)–(D)-SQL.txt`, `dist/`, скрипт проверки из scratch (вне репозитория).
