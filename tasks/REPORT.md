@@ -178,7 +178,21 @@ Exit code **0** — **0 errors**, 2 warning'а, оба унаследованы 
 По TASK push не делается (после приёмки — архитектор). Локально закоммичено для чистоты дерева:
 
 ```
-(заполнить выводом git log -1 --oneline и git status после commit)
+$ git add supabase/inspect_comments_guestbook.sql supabase/migrations/0003_comments_guestbook.sql tasks/REPORT.md
+$ git commit -m "TASK-007: 0003 comments/guestbook delta, rate-limit trigger, inspect columns"
+[main acc17b2] TASK-007: 0003 comments/guestbook delta, rate-limit trigger, inspect columns
+ 3 files changed, 568 insertions(+), 3 deletions(-)
+ create mode 100644 supabase/inspect_comments_guestbook.sql
+ create mode 100644 supabase/migrations/0003_comments_guestbook.sql
+
+$ git log -1 --oneline
+acc17b2 TASK-007: 0003 comments/guestbook delta, rate-limit trigger, inspect columns
+
+$ git status --short --branch
+## main...origin/main [ahead 1]
+?? image.png
 ```
+
+Итог: локальный commit `acc17b2`, ветка `main` **на 1 коммит впереди `origin/main`** — push не делал (по TASK его выполняет архитектор после приёмки). В рабочем дереве остался только незакоммиченный `image.png`.
 
 Не коммитил: `.env.local`, `image.png`, посторонние файлы в корне.
