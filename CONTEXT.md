@@ -67,7 +67,7 @@
 - **Не входит:** комментарии, гостевая книга (этап D)
 - **Не трогаем:** RLS, SQL, схему БД
 
-**Auth (TASK-006):** тестовый аккаунт `test.hermes.skripnik@gmail.com` **подтверждён** в Dashboard (2026-10-02, подтвердил пользователь). Живой вход/выход/F5 на сайте — ручная проверка **при приёмке TASK-006** (пароль у пользователя; в git и в чат не писать).
+**Auth (TASK-006):** аккаунт `test.hermes.skripnik@gmail.com` (пересоздан в Dashboard, 2026-10-03). **Живые проверки пользователя (2026-10-03):** вход → email в шапке; выход; F5 с `npm run dev` — сессия сохраняется; неверный пароль → «Неверный email или пароль».
 
 **БД (факты из inspect, 2026-10-02):** в проекте УЖЕ есть таблицы `stories`, `comments`, `guestbook_entries` — RLS включён на всех трёх; политики: `SELECT` всем, `INSERT` только с `auth.uid() = user_id`; политик записи для `anon` нет; `increment_story_views(uuid)` — `SECURITY DEFINER`. Снимок зафиксирован в `supabase/migrations/0001_baseline.sql`; `0002` не требуется. Полный DDL `comments`/`guestbook_entries` сверить в TASK-007 (`0003`).
 
