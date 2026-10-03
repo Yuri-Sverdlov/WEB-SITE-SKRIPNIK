@@ -8,7 +8,7 @@
 |---|---|---|
 | 006 | inspect, baseline, Home; 0002 не нужен | ce0bbb0 |
 | 007 | 0003 delta, inspect columns, rate limit | acc17b2 (+ приёмка rename) |
-| 008 | | |
+| 008 | StoryDetail: лента + форма; ReaderMessage*; messageErrors | 839134f (+ приёмка) |
 | 009 | | |
 
 ## Миграции (применение пользователем)

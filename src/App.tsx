@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes, useNavigate } from 'react-router-dom'
 import Contact from './pages/Contact'
 import GuestBook from './pages/GuestBook'
 import Home from './pages/Home'
@@ -14,7 +14,13 @@ const navLinkClass =
   'text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1'
 
 export default function App() {
+  const navigate = useNavigate()
   const { user, loading, signOut } = useAuth()
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="min-h-screen p-6 font-sans">
@@ -49,7 +55,7 @@ export default function App() {
               <span className="text-gray-600">{user.email}</span>
               <button
                 type="button"
-                onClick={() => void signOut()}
+                onClick={() => void handleLogout()}
                 className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1"
               >
                 Выйти

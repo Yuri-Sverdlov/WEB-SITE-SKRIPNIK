@@ -134,3 +134,15 @@
 **Факт:** `supabase/migrations/0003_comments_guestbook.sql` выполнен целиком в Supabase (Production). Результат: **Success. No rows returned** (подтверждение «Выполнить запрос» на предупреждении DDL — штатно).
 
 **Следующий шаг:** TASK-008 (кодер); опционально inspect триггеров; закоммитить вывод inspect в репо.
+
+---
+
+## 2026-10-03 — TASK-008 (D2) принят
+
+**Участники:** кодер (Hermes), пользователь (живые проверки), архитектор (приёмка, hotfix logout, push).
+
+**Сделано:** комментарии на `StoryDetail` — `comments.ts`, `ReaderMessageList` / `ReaderMessageForm`, `messageErrors.ts`. Гость — проверка кодера; вошедший + rate limit — пользователь (путь 2). **Hotfix:** «Выйти» → `/login`.
+
+**Git:** `839134f`, `6de7a9a` (кодер); архив `tasks/done/008-story-comments/`.
+
+**Следующий шаг:** TASK-009 — `/guestbook`.

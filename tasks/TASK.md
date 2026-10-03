@@ -1,66 +1,62 @@
 # Задание (архитектор → кодер)
 
-**ID:** TASK-008  
+**ID:** TASK-009  
 **Дата:** 2026-10-03  
 **Статус:** к выполнению  
-**Блок:** D2 — комментарии на странице рассказа  
-**Предшественник:** TASK-007 принят; **`0003` применён пользователем** (2026-10-03, Success).
+**Блок:** D3 — гостевая книга (`/guestbook`)  
+**Предшественник:** TASK-008 принят; **`0003` применён**; компоненты `ReaderMessageList` / `ReaderMessageForm` и `messageErrors.ts` готовы.
+
+**Сессия:** новая сессия или другой ПК — **`git pull`** первым делом. **`git push` не делать** — после приёмки архитектор.
 
 ---
 
 ## Цель
 
-Под текстом рассказа — **лента комментариев** (видна всем) и **форма** для вошедших. Переиспользуемые компоненты для TASK-009 (гостевая).
+Страница **`/guestbook`** вместо заглушки: **лента записей** (всем) и **форма** для вошедших. Переиспользовать компоненты из TASK-008.
 
-**БД:** таблица `public.comments` — после 0003: `author_name`, `body`, CHECK, rate limit, RLS. Есть колонка **`is_author_reply`** (boolean) — **не используем в UI** в этом TASK (ответы автора — этап 8–9); не ломать, не показывать отдельно.
+**БД:** таблица `public.guestbook_entries` — после 0003: `author_name`, `body`, CHECK, rate limit (3/мин на пользователя), RLS (SELECT всем, INSERT только свой `user_id`).
 
 ---
 
 ## Контекст
 
-- `StoryDetail.tsx` — подключить блок комментариев внизу.
-- Auth: `useAuth()` — гость vs `user`.
-- Insert только через Supabase client от **вошедшего** (`user_id` задаёт RLS; в insert передавать `user_id` = session user id, `story_id`, `author_name`, `body`).
-- **Email читателя в UI не показывать** — только `author_name`.
-- Ошибки Supabase/триггера — **русский** текст (в т.ч. rate limit из exception 0003).
-- Login redirect: `/login` с `state.from` = текущий путь рассказа (как в Login.tsx).
+- Роут и ссылка в навигации уже есть (`App.tsx`, `GuestBook.tsx` — сейчас заглушка `<h1>`).
+- Auth: `useAuth()` — как на `StoryDetail` (гость vs `user`).
+- Insert: `user_id` = session user id, `author_name`, `body` (без `story_id`).
+- **Email в UI не показывать** — только `author_name`.
+- Ошибки — **`mapReaderMessageError`** из `src/api/messageErrors.ts` (rate limit из триггера — дословно по-русски).
+- Login: `/login` с `state.from` = `/guestbook` (как комментарии на рассказе).
 
 ---
 
 ## Что сделать
 
-### 1. API `src/api/comments.ts` (или аналог)
+### 1. API `src/api/guestbook.ts` (или аналог)
 
-- `fetchComments(storyId)` — select по `story_id`, сортировка **`created_at ASC`** (старые сверху).
-- `insertComment({ storyId, userId, authorName, body })` — insert; маппинг ошибок на русский (лимит 3/мин, RLS, CHECK длины).
+- `fetchGuestbookEntries()` — select `id, author_name, body, created_at`, сортировка **`created_at ASC`**.
+- `insertGuestbookEntry({ userId, authorName, body })` — insert; клиентская валидация 2–40 / 1–2000 (можно вынести общие константы с `comments.ts` или дублировать минимально — без рефакторинга ради рефакторинга).
+- Ошибки через `mapReaderMessageError`.
 
-### 2. Компоненты (переиспользуемые для TASK-009)
+### 2. `GuestBook.tsx`
 
-Предложение имён (можно уточнить, но один стиль):
+- Заголовок «Гостевая книга» (или согласованный с навигацией русский текст — по ТЗ/стилю сайта).
+- `ReaderMessageList` + для гостя приглашение войти; для `user` — `ReaderMessageForm` (`submitLabel` в духе «Отправить запись»).
+- После успешной отправки — обновить ленту (как в `StoryDetail`).
 
-- **`ReaderMessageList`** — props: items `{ id, authorName, body, createdAt }`, loading/error.
-- **`ReaderMessageForm`** — props: `onSubmit`, `submitting`, `error`; поля **имя (2–40)** + **текст (1–2000)**; client validation; anti-double-submit.
+### 3. Scope — не трогать
 
-Комментарии на StoryDetail собирают list + form.
-
-### 3. `StoryDetail.tsx`
-
-- Под контентом рассказа: заголовок «Комментарии», list, затем:
-  - **Не вошедший:** текст «Войдите, чтобы оставить комментарий» + ссылка на `/login` с return на этот `/stories/:id`.
-  - **Вошедший:** форма.
-
-### 4. Scope — не трогать
-
-- `/guestbook` страницу (TASK-009).
 - SQL, RLS, 0003.
-- `is_author_reply` — не редактировать в форме.
+- Логику комментариев на `StoryDetail` (только общие компоненты/API-ошибки).
+- `App.tsx` logout → `/login` (уже сделано при приёмке 008).
 
 ---
 
 ## Проверки (полный вывод в REPORT)
 
 - `npm run build`, `npm run lint`
-- Вживую (dev + `.env.local`): гость видит ленту, формы нет; вошедший — отправляет комментарий; 4-й за минуту — русская ошибка; консоль без красных ошибок.
+- Вживую: гость видит ленту, формы нет; вошедший — запись в гостевой; 4-я за минуту — русская ошибка rate limit; F5 — запись на месте; консоль без красных ошибок.
+
+**Блокер пароля:** если нет доступа к паролю тестового аккаунта — гость проверяет кодер; сценарий «вошедший» может подтвердить пользователь (как TASK-008).
 
 ---
 
