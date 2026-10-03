@@ -50,7 +50,7 @@
 
 ## Текущий фокус
 
-**Активное задание:** **TASK-007** (D1 — comments + guestbook_entries, CHECK, rate limit). TASK-006 принят — архив `tasks/done/006-db-baseline/`. План: **`tasks/block-D.md`**.
+**Активное задание:** **TASK-008** (D2 — комментарии на StoryDetail) — выдать архитектором. TASK-007 принят — архив `tasks/done/007-comments-guestbook-schema/`. План: **`tasks/block-D.md`**.
 
 **Блок D (консультант):** TASK-006 → 007 (таблицы) → 008 (комментарии) → 009 (гостевая). Отчёт консультанту один раз после 009 — **`tasks/consultant-block-D-report.md`**.
 
@@ -69,7 +69,7 @@
 
 **Auth (TASK-006):** аккаунт `test.hermes.skripnik@gmail.com` (пересоздан в Dashboard, 2026-10-03). **Живые проверки пользователя (2026-10-03):** вход → email в шапке; выход; F5 с `npm run dev` — сессия сохраняется; неверный пароль → «Неверный email или пароль».
 
-**БД (факты из inspect, 2026-10-02):** в проекте УЖЕ есть таблицы `stories`, `comments`, `guestbook_entries` — RLS включён на всех трёх; политики: `SELECT` всем, `INSERT` только с `auth.uid() = user_id`; политик записи для `anon` нет; `increment_story_views(uuid)` — `SECURITY DEFINER`. Снимок зафиксирован в `supabase/migrations/0001_baseline.sql`; `0002` не требуется. Полный DDL `comments`/`guestbook_entries` сверить в TASK-007 (`0003`).
+**БД:** baseline `0001`; дельта **`0003_comments_guestbook.sql`** (TASK-007, принят) — `comments.author_name`, `guestbook_entries.author_name` (rename из `name`), CHECK, rate limit 3/мин. **Применение 0003 — пользователь** в SQL Editor (после pull с rename). Триггер `enforce_write_rate_limit`, RLS без изменений.
 
 
 **Решения (зафиксировано):**

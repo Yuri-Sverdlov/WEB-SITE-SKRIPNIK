@@ -109,4 +109,18 @@
 
 **Открыто:** Auth вживую на сайте; TODO колонок comments/guestbook в baseline.
 
-**Следующий шаг:** TASK-007 (0003, сверка схемы, rate limit).
+**Следующий шаг:** TASK-007 (0003, свerка схемы, rate limit).
+
+---
+
+## 2026-10-03 — TASK-007 (D1) принят
+
+**Участники:** кодер (Hermes), архитектор (приёмка, rename author_name, push).
+
+**Сделано:** `inspect_comments_guestbook.sql`, `0003_comments_guestbook.sql` (CHECK, FK DO-блоки, rate limit); REST-аудит колонок. Решение: `guestbook_entries.name` → `author_name`.
+
+**Git:** `acc17b2`, `ef89967`, push + правка 0003 при приёмке.
+
+**Пользователь:** применить `0003` в SQL Editor.
+
+**Следующий шаг:** TASK-008 (комментарии UI).

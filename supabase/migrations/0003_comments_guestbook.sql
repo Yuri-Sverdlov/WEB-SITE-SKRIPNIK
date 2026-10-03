@@ -15,7 +15,7 @@
 --   comments          : id uuid, story_id uuid, user_id uuid,
 --                       created_at timestamptz, body text        (5 колонок)
 --   guestbook_entries : id uuid, user_id uuid, created_at timestamptz,
---                       body text, name text                    (5 колонок)
+--                       body text, name text -> author_name (rename в 2.0)
 --   обе таблицы ПУСТЫЕ (Content-Range: */0) -> NOT NULL/CHECK безопасны
 --   RLS включён на обеих; политики: SELECT всем; INSERT с auth.uid() = user_id
 --   PK/FK/CHECK/индексы и NOT NULL существующих колонок REST-ом не видны —
@@ -102,22 +102,39 @@ end $$;
 -- =============================================================================
 -- 2. guestbook_entries
 -- =============================================================================
--- ВНИМАНИЕ, расхождение с брифом (описано в REPORT, решение за архитектором):
---   бриф требует колонку author_name (2..40). В таблице уже есть колонка
---   name text с тем же смыслом («кто оставил запись»).
---   По правилу TASK-007 «если колонки уже есть с другими именами — опиши в
---   REPORT, НЕ угадывай rename» — переименование НЕ делается: CHECK навешивается
---   на существующую name.
---   Если архитектор решит унифицировать имена, это ровно одна строка
---   (см. закомментированный блок 2.4 ниже).
+-- Решение архитектора (2026-10-03, вариант B): унифицировать имя поля под бриф —
+--   name -> author_name (таблица пустая на момент TASK-007).
 -- =============================================================================
 
--- 2.1. CHECK-и на существующие колонки
+-- 2.0. Переименование name -> author_name (идемпотентно)
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'guestbook_entries'
+      and column_name = 'name'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'guestbook_entries'
+      and column_name = 'author_name'
+  ) then
+    alter table public.guestbook_entries rename column name to author_name;
+    raise notice 'guestbook_entries: column name renamed to author_name';
+  else
+    raise notice 'guestbook_entries: rename skipped (already author_name or no name)';
+  end if;
+end $$;
+
+-- 2.1. CHECK-и
 alter table public.guestbook_entries
   drop constraint if exists guestbook_entries_name_len_check;
 alter table public.guestbook_entries
-  add constraint guestbook_entries_name_len_check
-  check (char_length(btrim(name)) between 2 and 40);
+  drop constraint if exists guestbook_entries_author_name_len_check;
+alter table public.guestbook_entries
+  add constraint guestbook_entries_author_name_len_check
+  check (char_length(btrim(author_name)) between 2 and 40);
 
 alter table public.guestbook_entries
   drop constraint if exists guestbook_entries_body_len_check;
@@ -127,23 +144,13 @@ alter table public.guestbook_entries
 
 -- 2.2. Обязательность (таблица пустая — проверено)
 alter table public.guestbook_entries
-  alter column name set not null;
+  alter column author_name set not null;
 alter table public.guestbook_entries
   alter column body set not null;
 
 -- 2.3. created_at default (идемпотентно)
 alter table public.guestbook_entries
   alter column created_at set default now();
-
--- 2.4. ОПЦИЯ (не активна): унификация имени колонки под бриф.
---      Включить только по решению архитектора — таблица пустая, поэтому
---      переименование сейчас бесплатно; после появления данных будет дороже.
--- alter table public.guestbook_entries rename column name to author_name;
--- alter table public.guestbook_entries
---   drop constraint if exists guestbook_entries_author_name_len_check;
--- alter table public.guestbook_entries
---   add constraint guestbook_entries_author_name_len_check
---   check (char_length(btrim(author_name)) between 2 and 40);
 
 -- 2.5. FK user_id -> auth.users (тот же приём, что в 1.5)
 do $$
@@ -271,6 +278,6 @@ create trigger guestbook_entries_rate_limit
 -- alter table public.comments drop constraint if exists comments_author_name_len_check;
 -- alter table public.comments drop constraint if exists comments_body_len_check;
 -- alter table public.comments drop column if exists author_name;
--- alter table public.guestbook_entries drop constraint if exists guestbook_entries_name_len_check;
+-- alter table public.guestbook_entries drop constraint if exists guestbook_entries_author_name_len_check;
 -- alter table public.guestbook_entries drop constraint if exists guestbook_entries_body_len_check;
 -- =============================================================================

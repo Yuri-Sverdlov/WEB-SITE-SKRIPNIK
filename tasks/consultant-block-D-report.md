@@ -7,7 +7,7 @@
 | TASK | Сделано | Commit |
 |---|---|---|
 | 006 | inspect, baseline, Home; 0002 не нужен | ce0bbb0 |
-| 007 | | |
+| 007 | 0003 delta, inspect columns, rate limit | acc17b2 (+ приёмка rename) |
 | 008 | | |
 | 009 | | |
 
