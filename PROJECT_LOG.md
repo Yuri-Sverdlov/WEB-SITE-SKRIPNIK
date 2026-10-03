@@ -109,7 +109,7 @@
 
 **Открыто:** Auth вживую на сайте; TODO колонок comments/guestbook в baseline.
 
-**Следующий шаг:** TASK-007 (0003, свerка схемы, rate limit).
+**Следующий шаг:** TASK-007 (0003, сверка схемы, rate limit).
 
 ---
 
