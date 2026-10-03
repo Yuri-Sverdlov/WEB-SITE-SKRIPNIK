@@ -15,7 +15,9 @@
 
 | Файл | Применена | Вывод SQL Editor / заметки |
 |---|---|---|
-| | | |
+| `0001_baseline.sql` | нет (документ) | — |
+| `0002_stories_rls.sql` | не создавался | — |
+| `0003_comments_guestbook.sql` | **да**, 2026-10-03 | Success. No rows returned |
 
 ## Проверки конца блока
 

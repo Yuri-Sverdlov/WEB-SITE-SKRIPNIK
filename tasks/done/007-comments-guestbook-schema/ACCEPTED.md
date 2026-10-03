@@ -15,7 +15,7 @@ Accepted: 2026-10-03. **Блок D1** — TASK-007.
 
 ## Пользователь
 
-Применить **`supabase/migrations/0003_comments_guestbook.sql`** в SQL Editor после `git pull`. Опционально: `inspect_comments_guestbook.sql` (A)–(D).
+**0003 применён** 2026-10-03 — SQL Editor, **Success. No rows returned**.
 
 ## Следующий
 

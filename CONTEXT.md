@@ -2,7 +2,7 @@
 
 > Обновляет **архитектор** при смене фокуса. Кодер читает при старте сессии (см. AGENTS.md).
 
-**Обновлено:** 2026-10-03 (TASK-006 принят, активен TASK-007)
+**Обновлено:** 2026-10-03 (0003 применён; активен TASK-008)
 
 ## Суть
 
@@ -50,7 +50,7 @@
 
 ## Текущий фокус
 
-**Активное задание:** **TASK-008** (D2 — комментарии на StoryDetail) — выдать архитектором. TASK-007 принят — архив `tasks/done/007-comments-guestbook-schema/`. План: **`tasks/block-D.md`**.
+**Активное задание:** **TASK-008** (D2 — комментарии на StoryDetail). TASK-007 принят — архив `tasks/done/007-comments-guestbook-schema/`. План: **`tasks/block-D.md`**.
 
 **Блок D (консультант):** TASK-006 → 007 (таблицы) → 008 (комментарии) → 009 (гостевая). Отчёт консультанту один раз после 009 — **`tasks/consultant-block-D-report.md`**.
 
@@ -69,7 +69,7 @@
 
 **Auth (TASK-006):** аккаунт `test.hermes.skripnik@gmail.com` (пересоздан в Dashboard, 2026-10-03). **Живые проверки пользователя (2026-10-03):** вход → email в шапке; выход; F5 с `npm run dev` — сессия сохраняется; неверный пароль → «Неверный email или пароль».
 
-**БД:** baseline `0001`; дельта **`0003_comments_guestbook.sql`** (TASK-007, принят) — `comments.author_name`, `guestbook_entries.author_name` (rename из `name`), CHECK, rate limit 3/мин. **Применение 0003 — пользователь** в SQL Editor (после pull с rename). Триггер `enforce_write_rate_limit`, RLS без изменений.
+**БД:** baseline `0001`; **`0003` применён пользователем** (2026-10-03, SQL Editor: **Success. No rows returned**). `comments.author_name`, `guestbook_entries.author_name`, CHECK, триггеры rate limit. Inspect (A)–(D): локально `supabase/блоки (A)–(D)-SQL.txt` — в comments есть **`is_author_reply`**; индекса на `story_id` может не быть (при необходимости — отдельная миграция).
 
 
 **Решения (зафиксировано):**

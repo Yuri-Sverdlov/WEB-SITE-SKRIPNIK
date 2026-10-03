@@ -1,93 +1,72 @@
 # Задание (архитектор → кодер)
 
-**ID:** TASK-007  
+**ID:** TASK-008  
 **Дата:** 2026-10-03  
 **Статус:** к выполнению  
-**Блок:** D1 — схема comments + guestbook, RLS, rate limit  
-**Предшественник:** TASK-006 принят (`tasks/done/006-db-baseline/`, commit `ce0bbb0`).
+**Блок:** D2 — комментарии на странице рассказа  
+**Предшественник:** TASK-007 принят; **`0003` применён пользователем** (2026-10-03, Success).
 
 ---
 
 ## Цель
 
-Привести таблицы **`comments`** и **`guestbook_entries`** (в БД уже есть — см. baseline) к требованиям брифа блока D: колонки, CHECK, RLS, лимит **3 записи / пользователь / таблица / минута**. Миграция — **дельта**, не «с нуля вслепую».
+Под текстом рассказа — **лента комментариев** (видна всем) и **форма** для вошедших. Переиспользуемые компоненты для TASK-009 (гостевая).
 
-**SQL в Supabase применяет только пользователь.** Ты пишешь `supabase/migrations/0003_comments_guestbook.sql` и инструкции в REPORT.
-
----
-
-## Контекст (факты TASK-006)
-
-- Baseline: `supabase/migrations/0001_baseline.sql`, вывод: `supabase/Вывод inspect-sql.txt`.
-- Уже есть RLS: SELECT всем; INSERT с `auth.uid() = user_id`. Политик UPDATE/DELETE нет.
-- Имена политик в Dashboard могут быть **обрезаны** в выводе inspect — сверить реальные имена через SQL или Dashboard.
-- Бриф консультанта говорил `guestbook` — в проекте таблица **`guestbook_entries`**. **Не переименовывать** без решения пользователя; фронт (TASK-009) подстраивается под имя таблицы.
+**БД:** таблица `public.comments` — после 0003: `author_name`, `body`, CHECK, rate limit, RLS. Есть колонка **`is_author_reply`** (boolean) — **не используем в UI** в этом TASK (ответы автора — этап 8–9); не ломать, не показывать отдельно.
 
 ---
 
-## 0. Аудит колонок (обязательно)
+## Контекст
 
-Добавить в `supabase/inspect.sql` **или** отдельный файл `supabase/inspect_comments_guestbook.sql` запросы колонок/constraints для `comments` и `guestbook_entries` (аналог блока (3) для stories).
-
-Пользователь выполняет в SQL Editor → вывод в REPORT (или ссылка на файл в репо, если пользователь положит txt).
-
-**Без вывода** — миграцию писать только на **известные** изменения из брифа (CHECK, trigger), с TODO на неизвестные колонки.
-
----
-
-## 1. Требования брифа (целевое состояние)
-
-### comments
-
-- `story_id` → `stories(id)` ON DELETE CASCADE  
-- `user_id` → `auth.users`  
-- `author_name` TEXT, **2–40** символов (CHECK)  
-- `body` TEXT, **1–2000** символов (CHECK)  
-- `created_at` timestamptz (default now(), если нет)
-
-### guestbook_entries (не `guestbook`)
-
-- `user_id`, `author_name` (2–40), `body` (1–2000), `created_at` — те же идеи CHECK  
-
-### RLS (если уже совпадает — в миграции только комментарий «без изменений»)
-
-- Читать — всем  
-- INSERT — только authenticated, `user_id = auth.uid()`  
-- UPDATE/DELETE — никому  
-
-### Rate limit
-
-- Триггер **BEFORE INSERT**: если у `auth.uid()` уже **≥ 3** строк в **этой таблице** за последнюю **минуту** — `RAISE EXCEPTION` с **понятным текстом** (на русском или код + маппинг на фронте в TASK-008 — предпочтительно русский текст в exception message).
+- `StoryDetail.tsx` — подключить блок комментариев внизу.
+- Auth: `useAuth()` — гость vs `user`.
+- Insert только через Supabase client от **вошедшего** (`user_id` задаёт RLS; в insert передавать `user_id` = session user id, `story_id`, `author_name`, `body`).
+- **Email читателя в UI не показывать** — только `author_name`.
+- Ошибки Supabase/триггера — **русский** текст (в т.ч. rate limit из exception 0003).
+- Login redirect: `/login` с `state.from` = текущий путь рассказа (как в Login.tsx).
 
 ---
 
-## 2. `0003_comments_guestbook.sql`
+## Что сделать
 
-- Идempotent где возможно (`ADD COLUMN IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS` + `ADD CONSTRAINT`, и т.д.).
-- Не ломать существующие данные: если колонки уже есть с другими именами — **опиши в REPORT**, не угадывай rename.
-- **Не применять** самому — пользователь выполнит в SQL Editor после приёмки файла архитектором.
+### 1. API `src/api/comments.ts` (или аналог)
 
----
+- `fetchComments(storyId)` — select по `story_id`, сортировка **`created_at ASC`** (старые сверху).
+- `insertComment({ storyId, userId, authorName, body })` — insert; маппинг ошибок на русский (лимит 3/мин, RLS, CHECK длины).
 
-## Scope — не трогать
+### 2. Компоненты (переиспользуемые для TASK-009)
 
-- UI комментариев/гостевой (TASK-008/009).
-- `0001`, `0002`.
-- `stories` RLS (уже OK).
-- `AGENTS.md`, `PROJECT_LOG.md`.
+Предложение имён (можно уточнить, но один стиль):
+
+- **`ReaderMessageList`** — props: items `{ id, authorName, body, createdAt }`, loading/error.
+- **`ReaderMessageForm`** — props: `onSubmit`, `submitting`, `error`; поля **имя (2–40)** + **текст (1–2000)**; client validation; anti-double-submit.
+
+Комментарии на StoryDetail собирают list + form.
+
+### 3. `StoryDetail.tsx`
+
+- Под контентом рассказа: заголовок «Комментарии», list, затем:
+  - **Не вошедший:** текст «Войдите, чтобы оставить комментарий» + ссылка на `/login` с return на этот `/stories/:id`.
+  - **Вошедший:** форма.
+
+### 4. Scope — не трогать
+
+- `/guestbook` страницу (TASK-009).
+- SQL, RLS, 0003.
+- `is_author_reply` — не редактировать в форме.
 
 ---
 
 ## Проверки (полный вывод в REPORT)
 
-- `npm run build` — exit 0 (ожидается без изменений фронта; всё равно прогнать).
-- `npm run lint` — без новых errors.
+- `npm run build`, `npm run lint`
+- Вживую (dev + `.env.local`): гость видит ленту, формы нет; вошедший — отправляет комментарий; 4-й за минуту — русская ошибка; консоль без красных ошибок.
 
 ---
 
 ## Git
 
-**Не push** — после приёмки архитектор (если в TASK не сказано иное). Commit локально можно, если удобно.
+**Не push** — после приёмки архитектор.
 
 ---
 
