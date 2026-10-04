@@ -272,26 +272,28 @@ Exit code **0** — 0 errors, те же 2 унаследованных warning'�
 | 1 | Вставил весь файл `supabase/migrations/0005_author_role.sql` → Run | **`Success. No rows returned`** — миграция применена |
 | 2 | `insert into public.site_admins (user_id) select id from auth.users where email = 'sverdlovy@yandex.ru' on conflict (user_id) do nothing;` | **`Success. No rows returned`** — команда прошла (для INSERT это нормальный вывод) |
 | 3 | `select count(*) from public.reserved_author_names;` | **`count = 9`** — seed на месте |
-| 4 | Подтверждающий `select` по `site_admins` (join с `auth.users`) | **ожидает вывода пользователя** |
+| 4 | Подтверждающий `select` по `site_admins` (join с `auth.users`) | **0 строк** — права НЕ выданы |
+| 5 | Диагностика `select id, email from auth.users order by created_at desc` | **реальный email автора: `sverdlov.y@yandex.ru`** (в TASK/брифе указан как `sverdlovy@yandex.ru` — расхождение) |
 
 Важно: `Success. No rows returned` у INSERT **не подтверждает**, что строка появилась — SQL Editor так
-отвечает на любой запрос, который не возвращает строк. Подтверждение — только шаг 4 (см. ниже).
+отвечает на любой запрос, который не возвращает строк. Именно так и вышло: команда прошла «успешно»,
+а строка не добавилась, потому что email в `auth.users` записан иначе.
 
-**Что пришлёт пользователь (шаг 4)** — ожидаем ровно одну строку:
+**Реальный email автора (подтверждён запросом к `auth.users`): `sverdlov.y@yandex.ru`.**
+Аккаунт: `22b58103-4872-421e-b400-9f8ec9b6bb98`. Повторная выдача прав — исправленной командой:
 
 ```sql
+insert into public.site_admins (user_id)
+select id from auth.users where email = 'sverdlov.y@yandex.ru'
+on conflict (user_id) do nothing;
+
 select a.user_id, u.email, a.created_at
   from public.site_admins a
   join auth.users u on u.id = a.user_id;
 ```
 
-Если строк 0 — email в `auth.users` записан иначе (регистр/опечатка), и права автору не выданы.
-Тогда диагностика:
-
-```sql
-select id, email, email_confirmed_at, created_at
-  from auth.users order by created_at desc limit 10;
-```
+Расхождение email стоит поправить в `CONTEXT.md` / брифе блока E (у архитектора) — в миграции email
+намеренно не прописан, поэтому править SQL не нужно, меняется только шаг пользователя.
 
 ---
 
