@@ -16,6 +16,9 @@ dist-ssr
 *.local
 .env.local
 
+# Личные заметки пользователя (не в репозиторий)
+tasks/Мой аккаунт..txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
