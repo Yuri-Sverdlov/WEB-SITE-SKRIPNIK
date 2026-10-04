@@ -366,7 +366,22 @@ errors: ["error: Uncaught Error: supabaseUrl is required. @ https://web-site-skr
 Локальный commit только поимённо (`supabase/migrations/0005_author_role.sql`, `vercel.json`, `tasks/REPORT.md`):
 
 ```
-(заполнить выводом git log -1 --oneline после commit)
+$ git add supabase/migrations/0005_author_role.sql vercel.json tasks/REPORT.md
+$ git commit -m "TASK-011: 0005 — роль автора, RLS записи, ответы (parent_id), бан, RPC модерации; vercel.json"
+[main 4042a5c] TASK-011: ...
+ 3 files changed, 862 insertions(+), 3 deletions(-)
+ create mode 100644 supabase/migrations/0005_author_role.sql
+ create mode 100644 vercel.json
+
+$ git log --oneline -3
+4042a5c TASK-011: 0005 — роль автора, RLS записи, ответы (parent_id), бан, RPC модерации; vercel.json
+f26bd40 TASK-011 выдан (E0/0005); бриф E в git; block-E сокращён; gitignore личного файла
+e384ce8 Черновик block-E: уборка тестовых comments/guestbook через /admin
+
+$ git status --short --branch
+## main...origin/main [ahead 3]
 ```
+
+Push **не делал** (TASK: push — архитектор после приёмки и разрешения пользователя).
 
 Не коммитил: `.env.local`, `tasks/Мой аккаунт..txt` (личный, в .gitignore), `supabase/migrations/report-0004_harden_reader_inserts.txt`, `supabase/migrations/Удаление мусорных строк..txt`, `dist/`, скрипты проверки из scratch.
