@@ -437,4 +437,22 @@ $ git status --short --branch
 
 Push **не делал** (TASK: push — архитектор после приёмки и разрешения пользователя).
 
+Обновление отчёта после выполнения проверок пользователем (2026-10-04):
+
+```
+$ git commit -m "REPORT TASK-010: 0004 применена (Success), проверки a-d пройдены, инструкция уборки тестовых строк"
+[main 27f0728] REPORT TASK-010: ...
+ 1 file changed, 116 insertions(+), 21 deletions(-)
+
+$ git log --oneline -4
+27f0728 REPORT TASK-010: 0004 применена (Success), проверки a-d пройдены, инструкция уборки тестовых строк
+39f0f0f REPORT: git hash для TASK-010
+4d1fa76 TASK-010: миграция 0004 — hardening INSERT (created_at/is_author_reply) + search_path
+f443c3f TASK-010 выдан: hardening reader INSERT (0004), бриф консультанта
+
+$ git status --short --branch
+## main...origin/main [ahead 4]
+?? supabase/migrations/report-0004_harden_reader_inserts.txt   <- вывод пользователя, не коммитил
+```
+
 Не коммитил: `.env.local`, `supabase/блоки (A)–(D)-SQL.txt`, `dist/`, скрипт проверки из scratch (вне репозитория).
