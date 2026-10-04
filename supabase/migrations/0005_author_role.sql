@@ -459,14 +459,22 @@ grant execute on function public.admin_delete_user_messages(uuid) to authenticat
 -- =============================================================================
 -- 11. ШАГ 2 (ПОСЛЕ применения миграции) — выдать себе права автора
 -- =============================================================================
--- Выполняет ПОЛЬЗОВАТЕЛЬ, подставив свой email. Email в миграции не прописан.
+-- Выполняет ПОЛЬЗОВАТЕЛЬ, подставив свой email. Email в исполняемой части миграции НЕ прописан.
+--
+-- ВАЖНО: auth.users сравнивает email как строку (точное совпадение), поэтому в команде должен быть
+-- ровно тот email, который лежит в auth.users. «Точка в имени ящика» (sverdlov.y@ == sverdlovy@)
+-- действует только на доставку почты у Яндекса, но НЕ в базе. Надёжный вариант — перечислить оба
+-- написания: сработает то, которое реально существует (если строки нет — вставится 0 строк, и это
+-- видно по контрольному select ниже).
 --
 -- insert into public.site_admins (user_id)
--- select id from auth.users where email = 'sverdlovy@yandex.ru'
+-- select id from auth.users
+--  where email in ('sverdlov.y@yandex.ru', 'sverdlovy@yandex.ru')
 -- on conflict (user_id) do nothing;
 --
 -- Проверка: select a.user_id, u.email, a.created_at
 --             from public.site_admins a join auth.users u on u.id = a.user_id;
+--            (ожидаем ровно 1 строку — ваш email, независимо от написания выше)
 
 
 -- =============================================================================
