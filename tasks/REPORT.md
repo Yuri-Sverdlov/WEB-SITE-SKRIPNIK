@@ -3,7 +3,7 @@
 **Задание:** TASK-011 (E0) — миграция `0005_author_role.sql`: роль автора, защита и бан в БД  
 **Дата:** 2026-10-04  
 **Статус:** миграция написана и **проверена на настоящем PostgreSQL 16.2 локально** (58 шагов, 0 провалов); build/lint OK; `vercel.json` добавлен (нужен — 404 подтверждён на проде).  
-**За пользователем:** `0005` **применена** (`Success. No rows returned`), команда шага 2 выполнена (`Success. No rows returned`), `reserved_author_names` = **9**; ожидает подтверждающий `SELECT` по `site_admins`; после push — шаг Vercel F5 (+ переменные окружения Vercel, см. раздел D).  
+**За пользователем:** `0005` **применена** (`Success. No rows returned`), права автора **выданы** (подтверждено строкой в `site_admins`: `sverdlov.y@yandex.ru`, 2026-10-04 15:51:30+00), `reserved_author_names` = **9**; остаётся шаг Vercel F5 после push (+ переменные окружения Vercel уже добавлены, см. раздел D).  
 **Push не делал.**
 
 ---
@@ -272,19 +272,21 @@ Exit code **0** — 0 errors, те же 2 унаследованных warning'�
 | 1 | Вставил весь файл `supabase/migrations/0005_author_role.sql` → Run | **`Success. No rows returned`** — миграция применена |
 | 2 | `insert into public.site_admins (user_id) select id from auth.users where email = 'sverdlovy@yandex.ru' on conflict (user_id) do nothing;` | **`Success. No rows returned`** — команда прошла (для INSERT это нормальный вывод) |
 | 3 | `select count(*) from public.reserved_author_names;` | **`count = 9`** — seed на месте |
-| 4 | Подтверждающий `select` по `site_admins` (join с `auth.users`) | **0 строк** — права НЕ выданы |
-| 5 | Диагностика `select id, email from auth.users order by created_at desc` | **реальный email автора: `sverdlov.y@yandex.ru`** (в TASK/брифе указан как `sverdlovy@yandex.ru` — расхождение) |
+| 4 | Подтверждающий `select` по `site_admins` (join с `auth.users`) — **после** исправления email | **1 строка: `22b58103-4872-421e-b400-9f8ec9b6bb98` / `sverdlov.y@yandex.ru` / `2026-10-04 15:51:30.829967+00`** — права выданы |
+| 5 | Первый вариант команды с email из TASK (`sverdlovy@yandex.ru`) | **0 строк** — в `auth.users` такого написания нет |
+| 6 | Диагностика `select id, email from auth.users order by created_at desc` | **реальный email автора: `sverdlov.y@yandex.ru`** (в TASK/брифе указан как `sverdlovy@yandex.ru` — расхождение) |
 
 Важно: `Success. No rows returned` у INSERT **не подтверждает**, что строка появилась — SQL Editor так
-отвечает на любой запрос, который не возвращает строк. Именно так и вышло: команда прошла «успешно»,
-а строка не добавилась, потому что email в `auth.users` записан иначе.
+отвечает на любой запрос, который не возвращает строк. Именно так и вышло на шаге 5: команда прошла
+«успешно», а строка не добавилась.
 
 **Реальный email автора (подтверждён запросом к `auth.users`): `sverdlov.y@yandex.ru`.**
-Аккаунт: `22b58103-4872-421e-b400-9f8ec9b6bb98`. Повторная выдача прав — исправленной командой:
+Аккаунт: `22b58103-4872-421e-b400-9f8ec9b6bb98`. Рабочая команда, которая и сработала:
 
 ```sql
 insert into public.site_admins (user_id)
-select id from auth.users where email = 'sverdlov.y@yandex.ru'
+select id from auth.users
+ where email in ('sverdlov.y@yandex.ru', 'sverdlovy@yandex.ru')
 on conflict (user_id) do nothing;
 
 select a.user_id, u.email, a.created_at
@@ -292,8 +294,45 @@ select a.user_id, u.email, a.created_at
   join auth.users u on u.id = a.user_id;
 ```
 
-Расхождение email стоит поправить в `CONTEXT.md` / брифе блока E (у архитектора) — в миграции email
-намеренно не прописан, поэтому править SQL не нужно, меняется только шаг пользователя.
+Смысл `where email in (...)`: `auth.users` сравнивает email как строку (точное совпадение), а «точка
+в имени ящика» — правило доставки почты Яндекса, в базе его нет. Перечисление обоих написаний
+срабатывает по тому, которое реально есть в `auth.users`.
+
+Расхождение email стоит поправить в `CONTEXT.md` / брифе блока E (у архитектора) — в исполняемой части
+миграции email намеренно не прописан, поэтому менять SQL не требуется, меняется только шаг пользователя.
+
+---
+
+## 3a. Независимая проверка на проде (кодер, только чтение по REST)
+
+Свои права на `site_admins` я проверить не могу (RLS закрывает таблицу от анонима), поэтому проверил
+**факт применения миграции в проде** и **границы доступа** анонимным ключом — только `select`/RPC,
+ничего не меняя:
+
+```
+1) comments.parent_id существует (колонка появилась только в 0005):
+   GET /rest/v1/comments?select=id,parent_id,is_author_reply&limit=1
+   HTTP 200  [{"id":"f67f91d5-…","parent_id":null,"is_author_reply":false}]
+
+2) RPC is_admin() от анонима:
+   POST /rest/v1/rpc/is_admin  ->  HTTP 200  false        (ожидаемо: сессии нет)
+
+3) RPC admin_count_user_messages от анонима:
+   POST /rest/v1/rpc/admin_count_user_messages
+   HTTP 401  {"code":"42501","message":"permission denied for function admin_count_user_messages"}
+
+4) RPC admin_delete_user_messages от анонима:
+   HTTP 401  {"code":"42501","message":"permission denied for function admin_delete_user_messages"}
+
+5) чтение не сломалось: stories 200, comments 200, guestbook_entries 200
+
+6) таблицы автора/бана/имён анониму не видны:
+   site_admins [] 200 | banned_users [] 200 | reserved_author_names [] 200
+```
+
+Что это доказывает: `0005` **действительно применена** (колонка `parent_id` есть), `revoke execute
+from anon` **сработал** (RPC модерации недоступны анониму), RLS новых таблиц **закрывает их от
+читателей**, а чтение рассказов/комментариев/гостевой не пострадало.
 
 ---
 
@@ -317,26 +356,31 @@ https://web-site-skripnik.vercel.app/             → status 200
 
 Vercel отдаёт существующие статические файлы раньше rewrites, поэтому `assets/*` не пострадают.
 
-**Дополнительно, и это важнее:** прод-сайт сейчас **не работает вообще** — страница пустая. Снято вживую:
+**Дополнительно, и это важнее:** на момент проверки прод-сайт **не работал вообще** — страница была пустая,
+в консоли `Uncaught Error: supabaseUrl is required` (в проекте Vercel не были заданы `VITE_SUPABASE_URL`
+и `VITE_SUPABASE_ANON_KEY`), и лежала старая сборка `index-tj5qTMgn.js`.
+
+**Обновление (пользователь, 2026-10-04): переменные Vercel добавлены** — на скриншоте проекта
+`yuri-sverdlov's projects / web-site-skripnik` видны `VITE_S…SE_URL` и `VITE_S…ON_KEY` со значением
+«Production and Preview», добавлены в тот же день. После деплоя я перепроверил прод вживую:
 
 ```
-#root дети: 0
-errors: ["error: Uncaught Error: supabaseUrl is required. @ https://web-site-skripnik.vercel.app/assets/index-tj5qTMgn.js"]
+https://web-site-skripnik.vercel.app/
+  bundle: /assets/index-B-l5ZsJg.js     <- совпадает с текущей локальной сборкой (не старая)
+  #root детей: 1, nav рендерится: Home / Stories… / GuestBook / Войти / Регистрация
+  errors: []
+https://web-site-skripnik.vercel.app/stories/all   -> status 404   <- ждёт vercel.json (нужен push)
 ```
 
-То есть в проекте Vercel **не заданы переменные окружения** `VITE_SUPABASE_URL` и
-`VITE_SUPABASE_ANON_KEY` (в репозиторий они не попадают — `.env.local` в `.gitignore`). Значения
-брать из `.env.example` / `.env.local` — в чат я их не выношу. Плюс на проде лежит **старая сборка**
-(`index-tj5qTMgn.js`; текущая локальная — `index-B-l5ZsJg.js`), т.е. деплой давно не обновлялся.
+То есть переменные окружения подхватились, приложение на проде живое; **остался только 404 на
+прямых ссылках**, который лечится добавленным `vercel.json` после push.
 
-**Порядок для вас (после push):**
-1. Vercel → Project → Settings → Environment Variables → добавить `VITE_SUPABASE_URL` и
-   `VITE_SUPABASE_ANON_KEY` (значения — из `.env.example`) для Production (и Preview).
-2. Deployments → Redeploy (или просто дождаться автодеплоя после push).
-3. Открыть `https://web-site-skripnik.vercel.app/stories/<id>` **в новой вкладке** → должна
+**Порядок для пользователя (после push):**
+1. Дождаться автодеплоя Vercel (или Deployments → Redeploy).
+2. Открыть `https://web-site-skripnik.vercel.app/stories/<id>` **в новой вкладке** → должна
    открыться страница рассказа (не 404).
-4. Нажать **F5** → страница остаётся страницей рассказа.
-5. Если после этого 404 всё ещё есть — напишите: значит rewrites не подхватились, будем разбираться
+3. Нажать **F5** → страница остаётся страницей рассказа.
+4. Если после этого 404 всё ещё есть — написать: значит rewrites не подхватились, разберёмся
    (альтернатива — `routes` с `handle: filesystem`).
 
 Пока push не сделан, `vercel.json` на прод не попадёт — это ожидаемо.
