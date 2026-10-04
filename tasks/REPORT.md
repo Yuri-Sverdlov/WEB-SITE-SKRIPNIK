@@ -3,7 +3,7 @@
 **Задание:** TASK-011 (E0) — миграция `0005_author_role.sql`: роль автора, защита и бан в БД  
 **Дата:** 2026-10-04  
 **Статус:** миграция написана и **проверена на настоящем PostgreSQL 16.2 локально** (58 шагов, 0 провалов); build/lint OK; `vercel.json` добавлен (нужен — 404 подтверждён на проде).  
-**За пользователем:** применить `0005` → выдать себе права автора → проверить seed; после push — шаг Vercel F5 (+ переменные окружения Vercel, см. раздел D).  
+**За пользователем:** `0005` **применена** (`Success. No rows returned`), команда шага 2 выполнена (`Success. No rows returned`), `reserved_author_names` = **9**; ожидает подтверждающий `SELECT` по `site_admins`; после push — шаг Vercel F5 (+ переменные окружения Vercel, см. раздел D).  
 **Push не делал.**
 
 ---
@@ -263,29 +263,35 @@ Exit code **0** — 0 errors, те же 2 унаследованных warning'�
 
 ---
 
-## 3. B. Шаг пользователя: применить `0005` и выдать себе права автора
+## 3. B. Применение `0005` и выдача прав автора — **выполнено пользователем**
 
-1. Supabase → SQL Editor → New query → вставить **всё** содержимое
-   `supabase/migrations/0005_author_role.sql` → Run.
-   Ожидаемо: `Success. No rows returned`.
-2. **Шаг 2 (отдельным запросом, подставить свой email):**
+**Факт (пользователь, 2026-10-04):**
 
-```sql
-insert into public.site_admins (user_id)
-select id from auth.users where email = 'sverdlovy@yandex.ru'
-on conflict (user_id) do nothing;
-```
+| # | Что делал | Вывод SQL Editor |
+|---|---|---|
+| 1 | Вставил весь файл `supabase/migrations/0005_author_role.sql` → Run | **`Success. No rows returned`** — миграция применена |
+| 2 | `insert into public.site_admins (user_id) select id from auth.users where email = 'sverdlovy@yandex.ru' on conflict (user_id) do nothing;` | **`Success. No rows returned`** — команда прошла (для INSERT это нормальный вывод) |
+| 3 | `select count(*) from public.reserved_author_names;` | **`count = 9`** — seed на месте |
+| 4 | Подтверждающий `select` по `site_admins` (join с `auth.users`) | **ожидает вывода пользователя** |
 
-3. Проверка, что права выдались и список имён заполнен:
+Важно: `Success. No rows returned` у INSERT **не подтверждает**, что строка появилась — SQL Editor так
+отвечает на любой запрос, который не возвращает строк. Подтверждение — только шаг 4 (см. ниже).
+
+**Что пришлёт пользователь (шаг 4)** — ожидаем ровно одну строку:
 
 ```sql
 select a.user_id, u.email, a.created_at
-  from public.site_admins a join auth.users u on u.id = a.user_id;
-
-select count(*) as имён_в_списке from public.reserved_author_names;   -- ожидаем 9
+  from public.site_admins a
+  join auth.users u on u.id = a.user_id;
 ```
 
-Вывод этих запросов пришлите — впишу в REPORT (сейчас: **не применено**).
+Если строк 0 — email в `auth.users` записан иначе (регистр/опечатка), и права автору не выданы.
+Тогда диагностика:
+
+```sql
+select id, email, email_confirmed_at, created_at
+  from auth.users order by created_at desc limit 10;
+```
 
 ---
 
