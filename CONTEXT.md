@@ -50,7 +50,7 @@
 
 ## Текущий фокус
 
-**Активное задание:** **TASK-011** (E0, `0005_author_role.sql`). Бриф: `tasks/consultant-block-E-brief.md`. Наследие D / уборка: `tasks/block-E.md`. Автор: `sverdlovy@yandex.ru`; тест-читатель: `test.hermes.skripnik@gmail.com`.
+**Активное задание:** **TASK-011** (E0, `0005_author_role.sql`). Бриф: `tasks/consultant-block-E-brief.md`. Наследие D / уборка: `tasks/block-E.md`. Автор: `sverdlov.y@yandex.ru` (`site_admins`); тест-читатель: `test.hermes.skripnik@gmail.com`.
 
 **Блок D (консультант):** TASK-006 → 007 (таблицы) → 008 (комментарии) → 009 (гостевая). Отчёт консультанту один раз после 009 — **`tasks/consultant-block-D-report.md`**.
 

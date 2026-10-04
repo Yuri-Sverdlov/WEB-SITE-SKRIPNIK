@@ -12,6 +12,6 @@
 | `comments` | всё тестовое из D: «Тест A», `проверка c*`, строки «yuri» с ручных проверок и т.п. |
 | `guestbook_entries` | всё тестовое: «yuri», «РКККК» и прочий мусор из проверок блока D |
 
-**Аккаунты:** `sverdlovy@yandex.ru` — автор (`site_admins`); `test.hermes.skripnik@gmail.com` — **читатель** (проверки a–h конца блока).
+**Аккаунты:** `sverdlov.y@yandex.ru` — автор (`site_admins`; в SQL — точное совпадение или `in ('sverdlov.y@…','sverdlovy@…')`); `test.hermes.skripnik@gmail.com` — **читатель** (проверки a–h).
 
 Отчёт консультанту в конце блока: **`tasks/consultant-block-E-report.md`**.
