@@ -158,3 +158,15 @@
 **Git:** `488817a`, `31d6f3c`; архив `tasks/done/009-guestbook/`. Отчёт консультанту — `tasks/consultant-block-D-report.md`.
 
 **Следующий шаг:** бриф следующего этапа (консультант / пользователь).
+
+---
+
+## 2026-10-04 — TASK-010 (D4 hardening) принят
+
+**Участники:** кодер (Hermes), пользователь (0004 + a–d), архитектор (приёмка, архив).
+
+**Сделано:** `0004_harden_reader_inserts.sql`; применение Success; проверки a–d на Supabase. **Уборка тестовых comments** — отложена до блока E (admin/модерация).
+
+**Git:** `4d1fa76` и REPORT-коммиты; архив `tasks/done/010-harden-reader-inserts/`. Кратко консультанту: `tasks/consultant-TASK-010-brief.md`.
+
+**Следующий шаг:** бриф блока E.
