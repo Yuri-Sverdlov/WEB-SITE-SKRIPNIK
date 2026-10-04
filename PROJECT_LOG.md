@@ -170,3 +170,15 @@
 **Git:** `4d1fa76` и REPORT-коммиты; архив `tasks/done/010-harden-reader-inserts/`. Кратко консультанту: `tasks/consultant-TASK-010-brief.md`.
 
 **Следующий шаг:** бриф блока E.
+
+---
+
+## 2026-10-04 — TASK-011 (E0) принят
+
+**Участники:** кодер (Hermes), пользователь (0005, site_admins, Vercel F5), архитектор (приёмка, push).
+
+**Сделано:** `0005_author_role.sql`, `vercel.json`; права автора; F5 OK на prod.
+
+**Git:** `4042a5c`, `6f70d4e`, push `435127c`; архив `tasks/done/011-author-role-db/`.
+
+**Следующий шаг:** TASK-012 — `/admin` каркас.

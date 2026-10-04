@@ -6,7 +6,7 @@
 
 | TASK | Сделано | Commit |
 |---|---|---|
-| 011 | 0005, vercel.json? | |
+| 011 | 0005, vercel.json, RPC, триггер | 4042a5c (+ push 435127c) |
 | 012 | каркас /admin | |
 | 013 | рассказы | |
 | 014 | Storage illustrations | |
@@ -17,7 +17,7 @@
 
 | Артефакт | Применена | Вывод SQL Editor / заметки |
 |---|---|---|
-| `0005_author_role.sql` | | |
+| `0005_author_role.sql` | **да**, 2026-10-04 | Success. site_admins: sverdlov.y@yandex.ru |
 | Bucket `illustrations` + политики | | Dashboard |
 
 ## Проверки конца блока (a–h, автор, Vercel, уборка мусора D)
