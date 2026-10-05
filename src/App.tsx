@@ -1,4 +1,4 @@
-import { Link, Route, Routes, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import Contact from './pages/Contact'
 import GuestBook from './pages/GuestBook'
 import Home from './pages/Home'
@@ -8,7 +8,10 @@ import StoriesAll from './pages/StoriesAll'
 import StoriesNew from './pages/StoriesNew'
 import StoriesPopular from './pages/StoriesPopular'
 import StoryDetail from './pages/StoryDetail'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminSectionPlaceholder from './pages/admin/AdminSectionPlaceholder'
 import { useAuth } from './contexts/AuthProvider'
+import { useIsAdmin } from './hooks/useIsAdmin'
 
 const navLinkClass =
   'text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1'
@@ -16,6 +19,7 @@ const navLinkClass =
 export default function App() {
   const navigate = useNavigate()
   const { user, loading, signOut } = useAuth()
+  const { isAdmin, loading: adminLoading } = useIsAdmin()
 
   async function handleLogout() {
     await signOut()
@@ -52,6 +56,11 @@ export default function App() {
             <span className="text-gray-400">…</span>
           ) : user ? (
             <>
+              {!adminLoading && isAdmin && (
+                <Link to="/admin" className={navLinkClass}>
+                  Кабинет
+                </Link>
+              )}
               <span className="text-gray-600">{user.email}</span>
               <button
                 type="button"
@@ -85,6 +94,39 @@ export default function App() {
           <Route path="/guestbook" element={<GuestBook />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="stories" replace />} />
+            <Route
+              path="stories"
+              element={
+                <AdminSectionPlaceholder title="Рассказы" taskLabel="TASK-013" />
+              }
+            />
+            <Route
+              path="comments"
+              element={
+                <AdminSectionPlaceholder title="Комментарии" taskLabel="TASK-015" />
+              }
+            />
+            <Route
+              path="guestbook"
+              element={
+                <AdminSectionPlaceholder
+                  title="Гостевая книга"
+                  taskLabel="TASK-015"
+                />
+              }
+            />
+            <Route
+              path="banned"
+              element={
+                <AdminSectionPlaceholder
+                  title="Заблокированные"
+                  taskLabel="TASK-015"
+                />
+              }
+            />
+          </Route>
         </Routes>
       </main>
     </div>
