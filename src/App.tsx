@@ -10,6 +10,8 @@ import StoriesPopular from './pages/StoriesPopular'
 import StoryDetail from './pages/StoryDetail'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminSectionPlaceholder from './pages/admin/AdminSectionPlaceholder'
+import AdminStoriesList from './pages/admin/AdminStoriesList'
+import AdminStoryForm from './pages/admin/AdminStoryForm'
 import { useAuth } from './contexts/AuthProvider'
 import { useIsAdmin } from './hooks/useIsAdmin'
 
@@ -94,14 +96,14 @@ export default function App() {
           <Route path="/guestbook" element={<GuestBook />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="stories" replace />} />
-            <Route
-              path="stories"
-              element={
-                <AdminSectionPlaceholder title="Рассказы" taskLabel="TASK-013" />
-              }
-            />
+            <Route path="stories">
+              <Route index element={<AdminStoriesList />} />
+              <Route path="new" element={<AdminStoryForm />} />
+              <Route path=":id/edit" element={<AdminStoryForm />} />
+            </Route>
             <Route
               path="comments"
               element={
@@ -111,19 +113,13 @@ export default function App() {
             <Route
               path="guestbook"
               element={
-                <AdminSectionPlaceholder
-                  title="Гостевая книга"
-                  taskLabel="TASK-015"
-                />
+                <AdminSectionPlaceholder title="Гостевая книга" taskLabel="TASK-015" />
               }
             />
             <Route
               path="banned"
               element={
-                <AdminSectionPlaceholder
-                  title="Заблокированные"
-                  taskLabel="TASK-015"
-                />
+                <AdminSectionPlaceholder title="Заблокированные" taskLabel="TASK-015" />
               }
             />
           </Route>
