@@ -194,3 +194,15 @@
 **Git:** `fd28a1a`, `fdb516e`; архив `tasks/done/012-admin-shell/`; push приёмки на `origin/main`.
 
 **Следующий шаг:** TASK-013 — CRUD рассказов в админке.
+
+---
+
+## 2026-10-05 — TASK-013 (E2) принят
+
+**Участники:** кодер, пользователь (localhost CRUD), архитектор (архив).
+
+**Сделано:** `/admin/stories` — список, поиск, create/edit/delete; push `465b2f4`.
+
+**Git:** `465b2f4`; архив `tasks/done/013-admin-stories-crud/`.
+
+**Следующий шаг:** TASK-014 — иллюстрации.

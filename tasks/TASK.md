@@ -1,92 +1,81 @@
 # Задание (архитектор → кодер)
 
-**ID:** TASK-013  
+**ID:** TASK-014  
 **Дата:** 2026-10-05  
 **Статус:** к выполнению  
-**Блок:** E2 — рассказы в `/admin`  
-**Бриф:** `tasks/consultant-block-E-brief.md` (раздел E2) · **0005 применена**
+**Блок:** E3 — иллюстрации рассказов  
+**Бриф:** `tasks/consultant-block-E-brief.md` (раздел E3) · **0005 применена**
 
 **Старт сессии:** **`git pull`**, `AGENTS.md`, `CONTEXT.md`, этот файл.
 
-**Предшественник:** TASK-012 принят — `tasks/done/012-admin-shell/`.
+**Предшественник:** TASK-013 принят — `tasks/done/013-admin-stories-crud/`.
 
 ---
 
 ## Цель
 
-Раздел **`/admin/stories`**: список всех рассказов с поиском, **создание**, **редактирование**, **удаление** (с подтверждением). После сохранения — переход на публичную страницу рассказа.
-
-**Без** загрузки иллюстраций (Storage) — **TASK-014**.
+В форме рассказа (`AdminStoryForm`): **загрузка**, **превью** и **удаление** иллюстраций. Файлы — Supabase Storage bucket **`illustrations`**. На публичной странице рассказа картинки уже показываются из `stories.illustrations` (URL).
 
 ---
 
 ## Контекст
 
-- Таблица `stories`: поля уже используются на сайте — см. `src/api/stories.ts`, `StoryDetail` (`title`, `content`, `published_at`, `tags`, `views_count`, `illustrations`).
-- INSERT / UPDATE / DELETE на `stories` — только **`is_admin()`** (RLS из 0005). Читатель через UI или консоль не должен проходить.
-- **Просмотры на публичной странице:** по-прежнему только RPC `increment_story_views` (+1 при загрузке). В админке автор задаёт **`views_count`** напрямую (стартовое значение для переноса с Проза.ру, ТЗ §3).
-- Поиск на витрине: `searchStories` в `stories.ts` — можно переиспользовать логику ILIKE или вынести общий helper; в админке поиск **по всей таблице**, без фильтра вкладок.
-- Абзацы в тексте: как на `StoryDetail` — хранение plain text, отображение `whitespace-pre-wrap`.
+- Колонка `stories.illustrations` — `text[]` публичных URL (как сейчас на `StoryDetail`).
+- Путь объекта в Storage: **`stories/<story_id>/<uuid>.<ext>`** (ext по типу файла).
+- Лимиты: **только изображения**, **≤ 5 МБ** на файл; проверка на клиенте до upload.
+- **Bucket и политики Storage** создаёт **пользователь** в Supabase Dashboard по инструкции архитектора (кодер пишет файл миграции/SQL **или** документ с политиками — см. ниже). Кодер **не** применяет SQL в прод.
+- RLS на `storage.objects`: **SELECT** — всем (anon + authenticated); **INSERT / UPDATE / DELETE** — только **`is_admin()`** (согласовано с брифом E3).
+- При **удалении** картинки из формы — удалить объект из Storage **и** убрать URL из массива `illustrations`.
+- При **удалении рассказа** (`deleteStory`) — удалить **все** файлы префикса `stories/<id>/` в bucket и строку в БД (расширить `deleteStory` или helper).
+
+**Создание рассказа:** иллюстрации можно добавлять только **после** появления `story_id` (режим edit) **или** после create — сохранить рассказ, затем upload (если проще UX: «Сначала сохраните рассказ, затем добавьте иллюстрации» — опиши в REPORT).
 
 ---
 
 ## Что сделать
 
-### 1. API (например `src/api/adminStories.ts`)
+### 1. Storage (файл для пользователя)
 
-- **`fetchAdminStories(page, searchQuery?)`** — список для админки: сортировка `published_at` desc; при непустом запросе — поиск по `title` и `content` (экранирование `%`, `_` как в `searchStories`); пагинация — **`PAGE_SIZE`** из `stories.ts` или отдельная константа (опиши в REPORT).
-- **`createStory(payload)`** — insert: `title`, `content`, `published_at`, `tags`, `views_count`; `illustrations` — пустой массив `[]` или null по согласованию со схемой.
-- **`updateStory(id, payload)`** — те же поля.
-- **`deleteStory(id)`** — delete одной строки.
-- Ошибки Supabase — русские сообщения для UI (как в auth/comments), без секретов в тексте.
+Создать **`supabase/migrations/0006_illustrations_storage.sql`** (или `docs/storage-illustrations.sql`, если политики Storage не в migrations — выбери один канонический файл):
 
-### 2. Страницы и маршруты
+- Bucket `illustrations`, **public** read (или signed URL — предпочтительно **public** для простоты MVP, как сейчас `<img src={url}>`).
+- Политики на `storage.objects` для bucket `illustrations`:
+  - чтение объектов — публичное;
+  - запись/удаление — `is_admin()`.
 
-Заменить placeholder «Рассказы» в `App.tsx` / `AdminLayout`:
+В **`tasks/REPORT.md`** — блок **«Шаги для пользователя»**: создать bucket (если миграция не создаёт bucket автоматически), применить SQL, проверить upload в Dashboard.
 
-| Маршрут | Назначение |
-|---|---|
-| `/admin/stories` | Таблица или список: заголовок, дата, просмотры; поле поиска; кнопка «Создать рассказ»; у строки — «Редактировать», «Удалить» |
-| `/admin/stories/new` | Форма создания |
-| `/admin/stories/:id/edit` | Форма редактирования (загрузка по id) |
+### 2. API (например `src/api/illustrations.ts`)
 
-**Список:** пагинация «назад / вперёд» или аналог, как на витрине.
+- `uploadStoryIllustration(storyId, file)` → public URL, upload по пути `stories/<storyId>/<uuid>.<ext>`.
+- `removeStoryIllustration(storyId, publicUrl)` — delete в Storage + `updateStory` / patch массива `illustrations`.
+- `deleteAllStoryIllustrations(storyId)` — list/remove prefix `stories/<storyId>/` (или перебор URL из БД перед delete story).
+- Ошибки — русские сообщения (как `mapAdminError`).
 
-**Форма (create + edit, один компонент OK):**
+Обновить **`updateStory` / `createStory`** при необходимости, чтобы **не затирать** `illustrations` при сохранении текста (TASK-013 уже не трогает массив на update — сохранить это поведение).
 
-- Заголовок (обязательный)
-- Текст — textarea, абзацы через перевод строки
-- Дата публикации — `date` или `datetime-local` (сохранять в `published_at` ISO)
-- Теги — ввод удобный для автора (например строка через запятую → `text[]`)
-- **Число просмотров** — number ≥ 0, подпись вроде «Начальное число просмотров»
+### 3. UI — `AdminStoryForm`
 
-Кнопки: «Сохранить», «Отмена» (назад к списку). После успешного create/update — **`navigate(`/stories/${id}`)`**.
-
-**Удаление:** `window.confirm` или простой modal — текст с заголовком рассказа; после успеха — обновить список или уйти на `/admin/stories`.
-
-### 3. UX / guard
-
-- Страницы формы и списка — **внутри** уже существующего `AdminLayout` (доступ только автору).
-- Состояния: загрузка, ошибка сети, «рассказ не найден» на edit.
+- Блок «Иллюстрации»: file input (multiple OK), превью thumbnails, кнопка «Удалить» у каждой.
+- Disabled / подсказка на **new**, если upload до первого save невозможен.
+- После upload — URL в `illustrations`, видно на `/stories/:id`.
 
 ### 4. Scope — не трогать
 
-- SQL, миграции, RLS.
-- Storage, поле иллюстраций в форме — TASK-014.
 - Модерация, бан, ответы автора — TASK-015 / 016.
-- Публичные списки `/stories/*` — только если нужен общий helper без смены поведения.
+- WYSIWYG, вставка картинок **внутрь** текста — вне MVP.
 
 ---
 
 ## Проверки (полный вывод в REPORT)
 
 - `npm run build`, `npm run lint`
-- Вживую (**автор**, `.env.local`):
-  1. `/admin/stories` — видны существующие рассказы; поиск по слову из title находит строку.
-  2. Создать тестовый рассказ → редирект на `/stories/<id>`, текст и теги на месте.
-  3. Редактировать заголовок / `views_count` → на публичной странице обновилось.
-  4. Удалить тестовый рассказ (подтверждение) → исчез из списка и 404 на `/stories/<id>`.
-- **Читатель** (по желанию): insert в `stories` из консоли — отклонено (уже покрыто блоком E; достаточно напоминания в REPORT).
+- **Пользователь** применил SQL / создал bucket (вывод или «Success» в REPORT).
+- Вживую (**автор**, localhost или Vercel после деплоя):
+  1. Редактировать рассказ → загрузить 1–2 JPG/PNG (< 5 МБ) → превью в форме и на `/stories/:id`.
+  2. Удалить одну иллюстрацию → исчезла на сайте и в Storage.
+  3. Удалить рассказ с иллюстрациями → файлы в Storage не остались (проверка в Dashboard или list API).
+- **Читатель:** upload в bucket из консоли — отклонено (RLS Storage).
 
 ---
 
