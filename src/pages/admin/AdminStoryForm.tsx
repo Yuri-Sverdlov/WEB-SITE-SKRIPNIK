@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { fetchStoryForEdit, createStory, updateStory } from '../../api/adminStories'
+import {
+  uploadStoryIllustration,
+  removeStoryIllustration,
+  validateImage,
+} from '../../api/illustrations'
 
 function toDatetimeLocal(iso: string | null): string {
   if (!iso) {
@@ -39,9 +44,11 @@ export default function AdminStoryForm() {
   const [publishedAt, setPublishedAt] = useState('')
   const [tagsInput, setTagsInput] = useState('')
   const [viewsCount, setViewsCount] = useState(0)
+  const [illustrations, setIllustrations] = useState<string[]>([])
   const [loading, setLoading] = useState(isEdit)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   // Edit mode: загружаем данные
   useEffect(() => {
@@ -67,6 +74,7 @@ export default function AdminStoryForm() {
       setPublishedAt(toDatetimeLocal(data.published_at))
       setTagsInput(tagsToString(data.tags))
       setViewsCount(data.views_count ?? 0)
+      setIllustrations(data.illustrations ?? [])
       setLoading(false)
     }
 
@@ -88,7 +96,6 @@ export default function AdminStoryForm() {
 
     const tags = stringToTags(tagsInput)
 
-    // publishedAt — datetime-local → ISO
     let publishedIso: string | null = null
     if (publishedAt) {
       try {
@@ -124,6 +131,57 @@ export default function AdminStoryForm() {
       if (err) { setError(err); return }
       navigate(`/stories/${newId}`)
     }
+  }
+
+  /** Обработчик выбора файлов */
+  async function handleFilesSelected(files: FileList | null) {
+    if (!files || files.length === 0 || uploading) return
+
+    setError(null)
+
+    const file = files[0]
+    const validationErr = validateImage(file)
+    if (validationErr) {
+      setError(validationErr)
+      return
+    }
+
+    if (!isEdit) {
+      setError('Сначала сохраните рассказ, затем добавьте иллюстрации.')
+      return
+    }
+
+    setUploading(true)
+    const { url, error: uploadErr } = await uploadStoryIllustration(editId!, file)
+    setUploading(false)
+
+    if (uploadErr) {
+      setError(uploadErr)
+      return
+    }
+
+    if (url) {
+      setIllustrations((prev) => [...prev, url])
+    }
+  }
+
+  /** Удалить иллюстрацию */
+  async function handleRemoveIllustration(url: string) {
+    if (uploading || submitting) return
+
+    if (!isEdit) return
+
+    setError(null)
+    setUploading(true)
+    const { error: err } = await removeStoryIllustration(editId!, url)
+    setUploading(false)
+
+    if (err) {
+      setError(err)
+      return
+    }
+
+    setIllustrations((prev) => prev.filter((u) => u !== url))
   }
 
   const inputClass =
@@ -218,6 +276,53 @@ export default function AdminStoryForm() {
               placeholder="тег1, тег2, …"
               className={inputClass}
             />
+          </div>
+
+          {/* ---------- Иллюстрации ---------- */}
+          <div>
+            <label className={labelClass}>Иллюстрации</label>
+
+            {illustrations.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-3">
+                {illustrations.map((url) => (
+                  <div key={url} className="relative inline-block">
+                    <img
+                      src={url}
+                      alt=""
+                      className="w-24 h-24 object-cover rounded border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveIllustration(url)}
+                      disabled={uploading}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ lineHeight: 1 }}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => void handleFilesSelected(e.target.files)}
+                disabled={uploading || !isEdit}
+                className="text-sm text-gray-600"
+              />
+              {uploading && <span className="text-gray-500 text-xs">Загрузка…</span>}
+              {!isEdit && (
+                <span className="text-gray-400 text-xs">
+                  Сначала сохраните рассказ
+                </span>
+              )}
+              <span className="text-gray-400 text-xs" style={{ paddingLeft: 8 }}>
+                &le; 5 МБ
+              </span>
+            </div>
           </div>
 
           <div className="flex gap-3">

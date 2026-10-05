@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { PAGE_SIZE } from './stories'
 import type { StoryDetail } from './stories'
+import { deleteAllStoryIllustrations } from './illustrations'
 
 export type CreateStoryPayload = {
   title: string
@@ -122,8 +123,15 @@ export async function updateStory(
   return { error: null }
 }
 
-/** Удалить рассказ */
+/** Удалить рассказ (в т.ч. очищает Storage иллюстраций) */
 export async function deleteStory(id: string): Promise<{ error: string | null }> {
+  // Сначала чистим иллюстрации в Storage (по массиву из БД, чтобы не зависеть от листинга)
+  const { data: story } = await supabase.from('stories').select('illustrations').eq('id', id).single()
+  if (story) {
+    const urls = (story as { illustrations: string[] }).illustrations || []
+    await deleteAllStoryIllustrations(id, urls)
+  }
+
   const { error } = await supabase.from('stories').delete().eq('id', id)
   if (error) return { error: mapAdminError(error.message) }
   return { error: null }
