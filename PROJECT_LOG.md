@@ -234,3 +234,13 @@
 **Сделано:** ответы автора на StoryDetail; E2E пользователя OK; commit `0e8b1d5`.
 
 **Следующий шаг:** TASK-017 — reader_profiles, затем финал блока E.
+
+---
+
+## 2026-10-06 — TASK-017 (E6) принят, код блока E завершён
+
+**Сделано:** reader_profiles, UI никнейма, email в админке; E2E i–n; `a6c3143`.
+
+**Архив:** `tasks/done/017-reader-profiles/`.
+
+**Следующий шаг:** уборка мусора D, consultant-block-E-report, удаление test.hermes.

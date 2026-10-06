@@ -78,6 +78,48 @@ create policy reader_profiles_admin_delete on public.reader_profiles
   using (public.is_admin());
 
 
+-- Запрещённые имена при создании профиля (проверка l, E6)
+create or replace function public.check_reader_profile_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $function$
+declare
+  normalized_name text;
+  matched_name    text;
+  trimmed         text;
+begin
+  trimmed := trim(new.display_name);
+  if char_length(trimmed) < 2 or char_length(trimmed) > 40 then
+    raise exception 'Имя должно быть от 2 до 40 символов'
+      using errcode = 'P0001';
+  end if;
+
+  new.display_name := trimmed;
+  normalized_name := public.normalize_author_name(new.display_name);
+
+  select r.name into matched_name
+    from public.reserved_author_names r
+   where normalized_name like '%' || public.normalize_author_name(r.name) || '%'
+   limit 1;
+
+  if matched_name is not null then
+    raise exception 'Такое имя использовать нельзя: оно зарезервировано за автором сайта'
+      using errcode = 'P0001';
+  end if;
+
+  return new;
+end;
+$function$;
+
+drop trigger if exists reader_profiles_check_name on public.reader_profiles;
+create trigger reader_profiles_check_name
+  before insert on public.reader_profiles
+  for each row
+  execute function public.check_reader_profile_name();
+
+
 -- =============================================================================
 -- 2. РАСШИРЕНИЕ ТРИГГЕРА
 -- =============================================================================
