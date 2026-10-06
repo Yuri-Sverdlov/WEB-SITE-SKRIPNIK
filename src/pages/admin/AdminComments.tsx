@@ -6,6 +6,7 @@ import {
   banUser,
   countUserMessages,
   deleteAllUserMessages,
+  fetchReaderEmails,
 } from '../../api/adminModeration'
 import type { AdminComment } from '../../api/adminModeration'
 import { PAGE_SIZE } from '../../api/stories'
@@ -26,6 +27,7 @@ export default function AdminComments() {
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [count, setCount] = useState<number | null>(null)
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({})
   const [reloadKey, setReloadKey] = useState(0)
 
   function refetch() {
@@ -50,6 +52,18 @@ export default function AdminComments() {
     load()
     return () => { cancelled = true }
   }, [page, reloadKey])
+
+  // Email читателей
+  useEffect(() => {
+    const ids = items.map(i => i.user_id).filter(Boolean) as string[]
+    if (ids.length === 0) return
+    fetchReaderEmails(ids).then(({ data, error }) => {
+      if (error) return
+      const map: Record<string, string> = {}
+      for (const r of data) map[r.user_id] = r.email
+      setEmailMap(map)
+    })
+  }, [items])
 
   async function handleDelete(item: AdminComment) {
     const ok = window.confirm(`Удалить комментарий «${item.body.substring(0, 80)}…»?`)
@@ -113,7 +127,7 @@ export default function AdminComments() {
               </>
             )}
           </div>
-          <div className="text-[10px] text-gray-300 mt-1">ID: {it.user_id || '—'}</div>
+          <div className="text-[10px] text-gray-300 mt-1">ID: {it.user_id || '—'} {it.user_id && emailMap[it.user_id] ? <span className="text-gray-500">{emailMap[it.user_id]}</span> : ''}</div>
         </div>
       ))}
 

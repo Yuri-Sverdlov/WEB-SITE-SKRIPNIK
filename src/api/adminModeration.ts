@@ -202,8 +202,29 @@ export async function fetchBannedUsers(): Promise<{
 }
 
 /* ============================================================
-   RPC — массовые операции
+   RPC — email читателей для модерации
    ============================================================ */
+
+export type ReaderProfileInfo = {
+  user_id: string
+  email: string
+  display_name: string | null
+}
+
+/** Получить email и display_name читателей по списку user_id (только автор) */
+export async function fetchReaderEmails(
+  userIds: string[],
+): Promise<{ data: ReaderProfileInfo[]; error: string | null }> {
+  const unique = [...new Set(userIds.filter(Boolean))]
+  if (unique.length === 0) return { data: [], error: null }
+
+  const { data, error } = await supabase.rpc('admin_reader_profiles', {
+    target_user_ids: unique,
+  })
+
+  if (error) return { data: [], error: mapErr(error.message) }
+  return { data: data as ReaderProfileInfo[], error: null }
+}
 
 export async function countUserMessages(
   userId: string,

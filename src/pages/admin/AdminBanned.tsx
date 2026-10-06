@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchBannedUsers, unbanUser } from '../../api/adminModeration'
+import { fetchBannedUsers, unbanUser, fetchReaderEmails } from '../../api/adminModeration'
 import type { AdminBannedUser } from '../../api/adminModeration'
 
 function fmt(d: string | null) {
@@ -12,6 +12,7 @@ export default function AdminBanned() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [unbanning, setUnbanning] = useState(false)
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({})
   const [reloadKey, setReloadKey] = useState(0)
 
   function refetch() {
@@ -32,6 +33,18 @@ export default function AdminBanned() {
     load()
     return () => { cancelled = true }
   }, [reloadKey])
+
+  // Email читателей
+  useEffect(() => {
+    const ids = users.map(u => u.user_id).filter(Boolean)
+    if (ids.length === 0) return
+    fetchReaderEmails(ids).then(({ data, error }) => {
+      if (error) return
+      const map: Record<string, string> = {}
+      for (const r of data) map[r.user_id] = r.email
+      setEmailMap(map)
+    })
+  }, [users])
 
   async function handleUnban(userId: string) {
     if (unbanning) return
@@ -58,6 +71,7 @@ export default function AdminBanned() {
             <thead>
               <tr className="border-b border-gray-200 text-left text-gray-600">
                 <th className="py-2 px-2">Имя</th>
+                <th className="py-2 px-2 w-44">Email</th>
                 <th className="py-2 px-2 w-36">Дата бана</th>
                 <th className="py-2 px-2">Причина</th>
                 <th className="py-2 px-2 w-28">Действия</th>
@@ -67,6 +81,7 @@ export default function AdminBanned() {
               {users.map((u) => (
                 <tr key={u.user_id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-2 px-2 max-w-48 truncate">{u.last_name}</td>
+                  <td className="py-2 px-2 text-gray-500 text-xs max-w-44 truncate">{emailMap[u.user_id] || '—'}</td>
                   <td className="py-2 px-2 text-gray-500 text-xs">{fmt(u.banned_at)}</td>
                   <td className="py-2 px-2 text-gray-500 text-xs max-w-64 truncate">{u.reason || '—'}</td>
                   <td className="py-2 px-2">
