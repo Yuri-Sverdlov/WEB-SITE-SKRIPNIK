@@ -61,6 +61,7 @@ Found 4 warnings and 0 errors. (все унаследованы)
 
 ## Git
 
-- **commit (предыдущая сессия):** `2fc2681 TASK-014: иллюстрации рассказов — Storage, upload/удаление, форма /admin`
-- **Фикс:** `published_at` NOT NULL (закоммитить с следующим TASK)
-- **Push не делать** (по TASK).
+- `2fc2681` — TASK-014: иллюстрации рассказов — Storage, upload/удаление, форма /admin
+- `d9bfb12` — TASK-014 hotfix: `published_at` NOT NULL (fallback now() при create/update)
+- Hotfix архитектора: `uploadStoryIllustration` — запись public URL в `stories.illustrations` после upload (в первом коммите был только Storage + state в форме).
+- Push — по запросу пользователя (2026-10-06).

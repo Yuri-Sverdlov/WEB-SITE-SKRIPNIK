@@ -61,6 +61,31 @@ export async function uploadStoryIllustration(
     .from('illustrations')
     .getPublicUrl(filePath)
 
+  const { data: story, error: fetchErr } = await supabase
+    .from('stories')
+    .select('illustrations')
+    .eq('id', storyId)
+    .single()
+
+  if (fetchErr) {
+    await supabase.storage.from('illustrations').remove([filePath])
+    return { url: null, error: mapStorageError(fetchErr.message) }
+  }
+
+  const current: string[] =
+    (story as { illustrations: string[] | null }).illustrations ?? []
+  const updated = [...current, publicUrl]
+
+  const { error: updateErr } = await supabase
+    .from('stories')
+    .update({ illustrations: updated })
+    .eq('id', storyId)
+
+  if (updateErr) {
+    await supabase.storage.from('illustrations').remove([filePath])
+    return { url: null, error: mapStorageError(updateErr.message) }
+  }
+
   return { url: publicUrl, error: null }
 }
 
