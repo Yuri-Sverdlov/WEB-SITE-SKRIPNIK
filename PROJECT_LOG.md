@@ -218,3 +218,11 @@
 **Git:** архив `tasks/done/014-illustrations-storage/`.
 
 **Следующий шаг:** TASK-015 — модерация и бан.
+
+---
+
+## 2026-10-06 — TASK-015 (E4) на main, активен TASK-016
+
+**Сделано:** модерация `/admin`, push `0bc8fd1`; дополнение E6 → `consultant-block-E-addendum-E6.md`.
+
+**Следующий шаг:** TASK-016 — ответы автора; затем TASK-017 (никнейм).
