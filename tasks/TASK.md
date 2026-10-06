@@ -23,7 +23,7 @@
 ## Контекст
 
 - Схема из **0005:** `comments.parent_id` → `comments(id)` on delete cascade; один уровень вложенности.
-- Триггер **`enforce_write_rate_limit`:** для **`is_admin()`** при ответе принимает `is_author_reply` / `parent_id` и подставляет подпись из **`author_display_name()`** («Александр Скрипnik»). Читатель не может подделать ответ автора с фронта.
+- Триггер **`enforce_write_rate_limit`:** для **`is_admin()`** при ответе принимает `is_author_reply` / `parent_id` и подставляет подпись из **`author_display_name()`** («Александр Скрипник»). Читатель не может подделать ответ автора с фронта.
 - Сейчас `fetchComments` / `ReaderMessageList` — **плоский** список без `parent_id` (см. комментарий в `comments.ts`).
 - Кто автор UI: **`useIsAdmin()`** (как «Кабинет» в шапке). Кнопки модерации — только в `/admin` (TASK-015).
 
