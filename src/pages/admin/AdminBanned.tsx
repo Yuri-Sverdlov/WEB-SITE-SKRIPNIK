@@ -12,9 +12,11 @@ export default function AdminBanned() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [unbanning, setUnbanning] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   function refetch() {
     setError(null)
+    setReloadKey((k) => k + 1)
   }
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function AdminBanned() {
     }
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [reloadKey])
 
   async function handleUnban(userId: string) {
     if (unbanning) return

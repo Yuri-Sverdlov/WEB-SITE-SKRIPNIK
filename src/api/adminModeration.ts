@@ -36,6 +36,17 @@ export type UserMessageCounts = {
   author_replies_count: number
 }
 
+function normalizeMessageCounts(data: unknown): UserMessageCounts {
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | Record<string, unknown>
+    | undefined
+  return {
+    comments_count: Number(row?.comments_count ?? 0),
+    guestbook_count: Number(row?.guestbook_count ?? 0),
+    author_replies_count: Number(row?.author_replies_count ?? 0),
+  }
+}
+
 /* ============================================================
    Хелперы
    ============================================================ */
@@ -201,15 +212,7 @@ export async function countUserMessages(
     target_user_id: userId,
   })
   if (error) return { data: null, error: mapErr(error.message) }
-  const d = data as UserMessageCounts
-  return {
-    data: {
-      comments_count: Number(d.comments_count ?? 0),
-      guestbook_count: Number(d.guestbook_count ?? 0),
-      author_replies_count: Number(d.author_replies_count ?? 0),
-    },
-    error: null,
-  }
+  return { data: normalizeMessageCounts(data), error: null }
 }
 
 export async function deleteAllUserMessages(
@@ -219,13 +222,5 @@ export async function deleteAllUserMessages(
     target_user_id: userId,
   })
   if (error) return { data: null, error: mapErr(error.message) }
-  const d = data as UserMessageCounts
-  return {
-    data: {
-      comments_count: Number(d.comments_count ?? 0),
-      guestbook_count: Number(d.guestbook_count ?? 0),
-      author_replies_count: Number(d.author_replies_count ?? 0),
-    },
-    error: null,
-  }
+  return { data: normalizeMessageCounts(data), error: null }
 }

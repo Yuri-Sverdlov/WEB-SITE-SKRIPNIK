@@ -21,8 +21,13 @@ export default function AdminGuestbook() {
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [count, setCount] = useState<number | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  function refetch() { setPage(0); setError(null) }
+  function refetch() {
+    setPage(0)
+    setError(null)
+    setReloadKey((k) => k + 1)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -37,7 +42,7 @@ export default function AdminGuestbook() {
     }
     load()
     return () => { cancelled = true }
-  }, [page])
+  }, [page, reloadKey])
 
   async function handleDelete(item: AdminGuestbookEntry) {
     const ok = window.confirm(`Удалить запись «${item.body.substring(0, 80)}…»?`)
