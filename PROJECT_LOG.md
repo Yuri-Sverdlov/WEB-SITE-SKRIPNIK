@@ -206,3 +206,15 @@
 **Git:** `465b2f4`; архив `tasks/done/013-admin-stories-crud/`.
 
 **Следующий шаг:** TASK-014 — иллюстрации.
+
+---
+
+## 2026-10-06 — TASK-014 (E3) принят
+
+**Участники:** кодер, пользователь (иллюстрации OK), архитектор (hotfix upload→БД, архив).
+
+**Сделано:** Storage `illustrations`, форма upload/delete, `0006` SQL; push `b72b952`.
+
+**Git:** архив `tasks/done/014-illustrations-storage/`.
+
+**Следующий шаг:** TASK-015 — модерация и бан.

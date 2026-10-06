@@ -2,7 +2,7 @@
 
 > Обновляет **архитектор** при смене фокуса. Кодер читает при старте сессии (см. AGENTS.md).
 
-**Обновлено:** 2026-10-05 (блок E; активен TASK-014)
+**Обновлено:** 2026-10-06 (блок E; активен TASK-015)
 
 ## Суть
 
@@ -50,7 +50,7 @@
 
 ## Текущий фокус
 
-**Активное задание:** **TASK-014** (E3, иллюстрации Storage). TASK-013 принят — `tasks/done/013-admin-stories-crud/`. TASK-012 — `tasks/done/012-admin-shell/`. **0005 применена.** Vercel SPA: `vercel.json`. Автор: `sverdlov.y@yandex.ru`; тест-читатель: `test.hermes.skripnik@gmail.com` (удалить перед продом — см. бриф блока E, §5).
+**Активное задание:** **TASK-015** (E4, модерация и бан). TASK-014 принят — `tasks/done/014-illustrations-storage/`. TASK-013 — `tasks/done/013-admin-stories-crud/`. **0005 применена.** Vercel SPA: `vercel.json`. Автор: `sverdlov.y@yandex.ru`; тест-читатель: `test.hermes.skripnik@gmail.com` (удалить перед продом — см. бриф блока E, §5).
 
 **Блок D (консультант):** TASK-006 → 007 (таблицы) → 008 (комментарии) → 009 (гостевая). Отчёт консультанту один раз после 009 — **`tasks/consultant-block-D-report.md`**.
 

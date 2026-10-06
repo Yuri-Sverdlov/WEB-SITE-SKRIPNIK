@@ -1,81 +1,93 @@
 # Задание (архитектор → кодер)
 
-**ID:** TASK-014  
-**Дата:** 2026-10-05  
+**ID:** TASK-015  
+**Дата:** 2026-10-06  
 **Статус:** к выполнению  
-**Блок:** E3 — иллюстрации рассказов  
-**Бриф:** `tasks/consultant-block-E-brief.md` (раздел E3) · **0005 применена**
+**Блок:** E4 — модерация и бан  
+**Бриф:** `tasks/consultant-block-E-brief.md` (раздел E4) · **0005**, **0006** применены
 
 **Старт сессии:** **`git pull`**, `AGENTS.md`, `CONTEXT.md`, этот файл.
 
-**Предшественник:** TASK-013 принят — `tasks/done/013-admin-stories-crud/`.
+**Предшественник:** TASK-014 принят — `tasks/done/014-illustrations-storage/`.
 
 ---
 
 ## Цель
 
-В форме рассказа (`AdminStoryForm`): **загрузка**, **превью** и **удаление** иллюстраций. Файлы — Supabase Storage bucket **`illustrations`**. На публичной странице рассказа картинки уже показываются из `stories.illustrations` (URL).
+В **`/admin`**: ленты **комментариев** и **гостевой книги**, удаление записей, **бан** и **разбан** читателей, **удаление всех сообщений** читателя одним RPC. Страница **«Заблокированные»**. Всё только для автора (`AdminLayout`).
+
+**Не входит:** ответы автора под комментарием на StoryDetail — **TASK-016**.
 
 ---
 
-## Контекст
+## Контекст (БД уже есть)
 
-- Колонка `stories.illustrations` — `text[]` публичных URL (как сейчас на `StoryDetail`).
-- Путь объекта в Storage: **`stories/<story_id>/<uuid>.<ext>`** (ext по типу файла).
-- Лимиты: **только изображения**, **≤ 5 МБ** на файл; проверка на клиенте до upload.
-- **Bucket и политики Storage** создаёт **пользователь** в Supabase Dashboard по инструкции архитектора (кодер пишет файл миграции/SQL **или** документ с политиками — см. ниже). Кодер **не** применяет SQL в прод.
-- RLS на `storage.objects`: **SELECT** — всем (anon + authenticated); **INSERT / UPDATE / DELETE** — только **`is_admin()`** (согласовано с брифом E3).
-- При **удалении** картинки из формы — удалить объект из Storage **и** убрать URL из массива `illustrations`.
-- При **удалении рассказа** (`deleteStory`) — удалить **все** файлы префикса `stories/<id>/` в bucket и строку в БД (расширить `deleteStory` или helper).
-
-**Создание рассказа:** иллюстрации можно добавлять только **после** появления `story_id` (режим edit) **или** после create — сохранить рассказ, затем upload (если проще UX: «Сначала сохраните рассказ, затем добавьте иллюстрации» — опиши в REPORT).
+- DELETE комментария / записи гостевой — **`is_admin()`** (0005).
+- **`banned_users`** — read/write только автор; триггер при INSERT в comments/guestbook отклоняет забаненных.
+- RPC (только authenticated + `is_admin()` внутри):
+  - **`admin_count_user_messages(target_user_id)`** → `comments_count`, `guestbook_count`, `author_replies_count`
+  - **`admin_delete_user_messages(target_user_id)`** → фактические числа удалённых
+- В `comments` / `guestbook_entries` есть **`user_id`**, **`author_name`**, **`body`**, **`created_at`**; у комментария — **`story_id`** (для ссылки на рассказ).
+- Термины брифа: кнопки про **«читателя»**, не «пользователя».
 
 ---
 
 ## Что сделать
 
-### 1. Storage (файл для пользователя)
+### 1. API (например `src/api/adminModeration.ts`)
 
-Создать **`supabase/migrations/0006_illustrations_storage.sql`** (или `docs/storage-illustrations.sql`, если политики Storage не в migrations — выбери один канонический файл):
+- **`fetchAdminComments()`** — все комментарии (или постранично): **новые сверху**; поля: id, story_id, author_name, body, created_at, user_id; join title рассказа опционально вторым запросом или embed если удобно.
+- **`fetchAdminGuestbook()`** — записи гостевой, **новые сверху**.
+- **`deleteComment(id)`**, **`deleteGuestbookEntry(id)`** — DELETE (ошибки по-русски).
+- **`banUser(userId, reason?)`** — insert в `banned_users` (reason nullable).
+- **`unbanUser(userId)`** — delete из `banned_users`.
+- **`fetchBannedUsers()`** — список для страницы «Заблокированные»: user_id, banned_at, reason; **имя для UI** — последний `author_name` из comments/guestbook или «—» / email недоступен (не тянуть `auth.users` с фронта без RPC).
+- **`countUserMessages(userId)`** — `rpc('admin_count_user_messages', …)`.
+- **`deleteAllUserMessages(userId)`** — `rpc('admin_delete_user_messages', …)`.
 
-- Bucket `illustrations`, **public** read (или signed URL — предпочтительно **public** для простоты MVP, как сейчас `<img src={url}>`).
-- Политики на `storage.objects` для bucket `illustrations`:
-  - чтение объектов — публичное;
-  - запись/удаление — `is_admin()`.
+### 2. Страницы (заменить placeholders в `App.tsx`)
 
-В **`tasks/REPORT.md`** — блок **«Шаги для пользователя»**: создать bucket (если миграция не создаёт bucket автоматически), применить SQL, проверить upload в Dashboard.
+| Маршрут | UI |
+|---|---|
+| `/admin/comments` | Лента: дата, имя, текст, ссылка «→ рассказ» (`/stories/:story_id`); три действия на запись (см. ниже) |
+| `/admin/guestbook` | То же без ссылки на рассказ |
+| `/admin/banned` | Таблица: имя (как выше), дата бана, причина, **Разблокировать** |
 
-### 2. API (например `src/api/illustrations.ts`)
+**На каждой записи комментария / гостевой — всегда три кнопки:**
 
-- `uploadStoryIllustration(storyId, file)` → public URL, upload по пути `stories/<storyId>/<uuid>.<ext>`.
-- `removeStoryIllustration(storyId, publicUrl)` — delete в Storage + `updateStory` / patch массива `illustrations`.
-- `deleteAllStoryIllustrations(storyId)` — list/remove prefix `stories/<storyId>/` (или перебор URL из БД перед delete story).
-- Ошибки — русские сообщения (как `mapAdminError`).
+1. **Удалить** — confirm с кратким текстом → delete одной строки.
+2. **Заблокировать читателя** — prompt/modal: необязательное поле «Причина» → `banUser(user_id, reason)`; **сообщения не удалять**.
+3. **Удалить все сообщения читателя** — сначала **`countUserMessages`**, confirm:
 
-Обновить **`updateStory` / `createStory`** при необходимости, чтобы **не затирать** `illustrations` при сохранении текста (TASK-013 уже не трогает массив на update — сохранить это поведение).
+   «Будет удалено N комментариев и M записей гостевой книги. Ответы автора на эти комментарии тоже будут удалены. Продолжить?»
 
-### 3. UI — `AdminStoryForm`
+   (использовать `comments_count`, `guestbook_count`, `author_replies_count` из RPC для текста; после подтверждения — один вызов **`deleteAllUserMessages`**, не цикл delete из браузера).
 
-- Блок «Иллюстрации»: file input (multiple OK), превью thumbnails, кнопка «Удалить» у каждой.
-- Disabled / подсказка на **new**, если upload до первого save невозможен.
-- После upload — URL в `illustrations`, видно на `/stories/:id`.
+Блокировка и удаление всех сообщений — **независимые** действия.
+
+### 3. UX
+
+- Состояния загрузки / ошибка / пустой список.
+- После delete/ban — обновить список (refetch).
+- Если `user_id` null (не должно быть у нормальных INSERT) — скрыть ban / delete-all или показать «—».
 
 ### 4. Scope — не трогать
 
-- Модерация, бан, ответы автора — TASK-015 / 016.
-- WYSIWYG, вставка картинок **внутрь** текста — вне MVP.
+- SQL, новые миграции (если не обнаружен блокер — тогда описать в REPORT).
+- StoryDetail: кнопка «Ответить» — TASK-016.
+- Фильтр по тегам на витрине — отдельная задача (не E4).
 
 ---
 
 ## Проверки (полный вывод в REPORT)
 
 - `npm run build`, `npm run lint`
-- **Пользователь** применил SQL / создал bucket (вывод или «Success» в REPORT).
-- Вживую (**автор**, localhost или Vercel после деплоя):
-  1. Редактировать рассказ → загрузить 1–2 JPG/PNG (< 5 МБ) → превью в форме и на `/stories/:id`.
-  2. Удалить одну иллюстрацию → исчезла на сайте и в Storage.
-  3. Удалить рассказ с иллюстрациями → файлы в Storage не остались (проверка в Dashboard или list API).
-- **Читатель:** upload в bucket из консоли — отклонено (RLS Storage).
+- **Автор** (localhost или Vercel):
+  1. `/admin/comments` — видны комментарии, ссылка на рассказ работает.
+  2. Удалить один комментарий — исчез с сайта и из админки.
+  3. Заблокировать test.hermes (или тестового читателя) — новый комментарий/гостевая отклоняются; в `/admin/banned` есть строка; **Разблокировать** — снова можно писать.
+  4. «Удалить все сообщения читателя» — числа в confirm совпадают с фактом после удаления.
+- Гостевая — те же три кнопки на `/admin/guestbook`.
 
 ---
 
