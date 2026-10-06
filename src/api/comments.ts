@@ -12,6 +12,8 @@ export type CommentItem = {
   author_name: string
   body: string
   created_at: string
+  parent_id: string | null
+  is_author_reply: boolean
 }
 
 export type CommentsResult = {
@@ -25,12 +27,12 @@ export type InsertCommentResult =
 
 /**
  * Лента комментариев рассказа: старые сверху.
- * `is_author_reply` не запрашиваем и не показываем — ответы автора это этап 8-9.
+ * Включает parent_id и is_author_reply для построения дерева ответов автора.
  */
 export async function fetchComments(storyId: string): Promise<CommentsResult> {
   const { data, error } = await supabase
     .from('comments')
-    .select('id, author_name, body, created_at')
+    .select('id, author_name, body, created_at, parent_id, is_author_reply')
     .eq('story_id', storyId)
     .order('created_at', { ascending: true })
 
@@ -76,6 +78,37 @@ export async function insertComment(input: {
     user_id: input.userId,
     author_name: input.authorName.trim(),
     body: input.body.trim(),
+  })
+
+  if (error) {
+    return { ok: false, message: mapReaderMessageError(error.message) }
+  }
+
+  return { ok: true }
+}
+
+/**
+ * Ответ автора на комментарий читателя.
+ * Без поля имени — подпись задаёт БД (author_display_name).
+ */
+export async function insertAuthorReply(input: {
+  storyId: string
+  userId: string
+  body: string
+  parentId: string
+}): Promise<InsertCommentResult> {
+  const text = input.body.trim()
+  if (text.length < BODY_MIN || text.length > BODY_MAX) {
+    return { ok: false, message: `Текст должен быть от ${BODY_MIN} до ${BODY_MAX} символов` }
+  }
+
+  const { error } = await supabase.from('comments').insert({
+    story_id: input.storyId,
+    user_id: input.userId,
+    author_name: '',           // триггер подставит author_display_name
+    body: text,
+    parent_id: input.parentId,
+    is_author_reply: true,
   })
 
   if (error) {
