@@ -91,7 +91,7 @@ export async function createStory(
     .insert({
       title: payload.title,
       content: payload.content ?? '',
-      published_at: payload.published_at ?? null,
+      published_at: payload.published_at ?? new Date().toISOString(),
       tags: payload.tags ?? [],
       views_count: payload.views_count ?? 0,
       illustrations: [],
@@ -113,7 +113,7 @@ export async function updateStory(
     .update({
       title: payload.title,
       content: payload.content ?? '',
-      published_at: payload.published_at ?? null,
+      published_at: payload.published_at ?? new Date().toISOString(),
       tags: payload.tags ?? [],
       views_count: payload.views_count ?? 0,
     })
