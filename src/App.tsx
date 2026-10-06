@@ -9,9 +9,11 @@ import StoriesNew from './pages/StoriesNew'
 import StoriesPopular from './pages/StoriesPopular'
 import StoryDetail from './pages/StoryDetail'
 import AdminLayout from './pages/admin/AdminLayout'
-import AdminSectionPlaceholder from './pages/admin/AdminSectionPlaceholder'
 import AdminStoriesList from './pages/admin/AdminStoriesList'
 import AdminStoryForm from './pages/admin/AdminStoryForm'
+import AdminComments from './pages/admin/AdminComments'
+import AdminGuestbook from './pages/admin/AdminGuestbook'
+import AdminBanned from './pages/admin/AdminBanned'
 import { useAuth } from './contexts/AuthProvider'
 import { useIsAdmin } from './hooks/useIsAdmin'
 
@@ -104,24 +106,9 @@ export default function App() {
               <Route path="new" element={<AdminStoryForm />} />
               <Route path=":id/edit" element={<AdminStoryForm />} />
             </Route>
-            <Route
-              path="comments"
-              element={
-                <AdminSectionPlaceholder title="Комментарии" taskLabel="TASK-015" />
-              }
-            />
-            <Route
-              path="guestbook"
-              element={
-                <AdminSectionPlaceholder title="Гостевая книга" taskLabel="TASK-015" />
-              }
-            />
-            <Route
-              path="banned"
-              element={
-                <AdminSectionPlaceholder title="Заблокированные" taskLabel="TASK-015" />
-              }
-            />
+            <Route path="comments" element={<AdminComments />} />
+                        <Route path="guestbook" element={<AdminGuestbook />} />
+                        <Route path="banned" element={<AdminBanned />} />
           </Route>
         </Routes>
       </main>
