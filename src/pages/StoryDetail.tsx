@@ -12,8 +12,6 @@ import type { StoryDetail as StoryDetailType } from '../api/stories'
 import { fetchMyProfile, createProfile } from '../api/readerProfile'
 import type { ReaderProfile } from '../api/readerProfile'
 
-const AUTHOR_DISPLAY_NAME = 'Александр Скрипник'
-
 function formatDateTime(value: string): string {
   if (!value) return '—'
   try {
@@ -199,8 +197,8 @@ export default function StoryDetail() {
                           <div key={ch.id} className="ml-4 pl-3 border-l-2 border-blue-200 mt-2 py-1 bg-blue-50 rounded">
                             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-1">
                               <span className="font-medium text-blue-700">
-                                {ch.author_name === AUTHOR_DISPLAY_NAME ? 'Ответ автора' : ch.author_name}
-                              </span>
+                                                              {ch.is_author_reply ? 'Ответ автора' : ch.author_name}
+                                                            </span>
                               <span>{formatDateTime(ch.created_at)}</span>
                             </div>
                             <p className="text-gray-800 leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
