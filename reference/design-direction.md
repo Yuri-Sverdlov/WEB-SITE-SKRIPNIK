@@ -58,6 +58,10 @@
 Палитра и шрифты зафиксированы в `tailwind.config.js` как `theme.extend.colors` и `theme.extend.fontFamily`.  
 При смене дизайна (F2–F5) — менять цвета в одном месте.
 
+---
+
+**Утверждение F1 (пользователь, 2026-10-09):** скрин `reference/screens/f1-story-detail.png` принят как начальный этап; переход к F2 (TASK-020).
+
 ## Артефакты Dembrandt
 
 - `reference/yakubovich/DESIGN.md` + `screenshot.png`
