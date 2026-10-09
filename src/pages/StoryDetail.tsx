@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
 import StoriesTabNav from '../components/StoriesTabNav'
 import ReaderMessageForm from '../components/ReaderMessageForm'
+import SiteHeaderPreview from '../components/SiteHeaderPreview'
 import { useAuth } from '../contexts/AuthProvider'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 import { fetchComments, insertComment, insertAuthorReply } from '../api/comments'
@@ -145,113 +146,116 @@ export default function StoryDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <StoriesTabNav />
-      {loading && <p className="text-gray-500">Загрузка...</p>}
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4">{error}</div>}
-      {!loading && notFound && <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded p-3 mb-4">Рассказ не найден.</div>}
+    <div className="bg-paper min-h-screen">
+      <SiteHeaderPreview />
+      <div className="max-w-4xl mx-auto">
+        <StoriesTabNav />
+        {loading && <p className="text-muted">Загрузка...</p>}
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4">{error}</div>}
+        {!loading && notFound && <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded p-3 mb-4">Рассказ не найден.</div>}
 
-      {!loading && story && (
-        <article>
-          <Link to="/stories/all" className="text-sm text-blue-600 hover:underline mb-4 inline-block">&larr; к списку</Link>
-          <h1 className="text-3xl font-bold mb-3">{story.title}</h1>
-          <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-500">
-            <span>{formatDate(story.published_at)}</span>
-            <span>{displayedViews ?? story.views_count ?? 0} просмотров</span>
-            {story.tags && story.tags.length > 0 && (
-              <span className="flex flex-wrap gap-1">
-                {story.tags.map(tag => <span key={tag} className="bg-gray-100 text-gray-600 rounded-full px-2.5 py-0.5 text-xs">{tag}</span>)}
-              </span>
-            )}
-          </div>
-          {story.illustrations && story.illustrations.length > 0 && (
-            <div className="flex flex-wrap gap-3 mb-6">
-              {story.illustrations.map((url, i) => <img key={i} src={url} alt={`Илл. ${i + 1}`} className="rounded-lg max-w-full h-auto max-h-96 object-contain" />)}
+        {!loading && story && (
+          <article className="font-story text-ink leading-relaxed">
+            <Link to="/stories/all" className="text-sm text-accent hover:underline mb-4 inline-block">&larr; к списку</Link>
+            <h1 className="text-3xl font-ui text-ink font-bold mb-3">{story.title}</h1>
+            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-muted">
+              <span>{formatDate(story.published_at)}</span>
+              <span>{displayedViews ?? story.views_count ?? 0} просмотров</span>
+              {story.tags && story.tags.length > 0 && (
+                <span className="flex flex-wrap gap-1">
+                  {story.tags.map(tag => <span key={tag} className="bg-gray-100 text-muted rounded-full px-2.5 py-0.5 text-xs">{tag}</span>)}
+                </span>
+              )}
             </div>
-          )}
-          {story.content && <div className="prose text-gray-800 leading-relaxed whitespace-pre-wrap">{story.content}</div>}
-        </article>
-      )}
-
-      {!loading && story && (
-        <section className="mt-10 border-t border-gray-200 pt-6">
-          <h2 className="text-xl font-semibold mb-4">Комментарии</h2>
-
-          {(() => {
-            const { roots, replies } = buildCommentTree()
-            return commentsLoading ? <p className="text-gray-500 text-sm">Загрузка сообщений...</p>
-              : commentsError ? <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">{commentsError}</div>
-              : roots.length === 0 ? <p className="text-gray-500 text-sm">Комментариев пока нет — оставьте первый.</p>
-              : <div className="space-y-3">
-                  {roots.map(root => {
-                    const children = replies.get(root.id) ?? []
-                    return (
-                      <div key={root.id} className="border border-gray-200 rounded-lg p-3 bg-white">
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-1">
-                          <span className="font-medium text-gray-800">{root.author_name}</span>
-                          <span>{formatDateTime(root.created_at)}</span>
-                        </div>
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap break-words mb-2">{root.body}</p>
-
-                        {children.map(ch => (
-                          <div key={ch.id} className="ml-4 pl-3 border-l-2 border-blue-200 mt-2 py-1 bg-blue-50 rounded">
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-1">
-                              <span className="font-medium text-blue-700">
-                                                              {ch.is_author_reply ? 'Ответ автора' : ch.author_name}
-                                                            </span>
-                              <span>{formatDateTime(ch.created_at)}</span>
-                            </div>
-                            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
-                          </div>
-                        ))}
-
-                        {isAdmin && children.length === 0 && (
-                          replyForm === root.id ? (
-                            <form onSubmit={e => void handleReplySubmit(e)} className="mt-2" noValidate>
-                              {replyError && <div className="bg-red-50 border border-red-200 text-red-700 rounded px-2 py-1 text-xs mb-1">{replyError}</div>}
-                              <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
-                                placeholder="Текст ответа..."
-                                className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-                              <div className="flex gap-1 mt-1">
-                                <button type="submit" disabled={replying}
-                                  className="bg-blue-600 text-white rounded px-3 py-1.5 text-xs font-medium hover:bg-blue-700 disabled:opacity-50">
-                                  {replying ? '…' : 'Отправить'}
-                                </button>
-                                <button type="button" onClick={closeReply}
-                                  className="border border-gray-300 rounded px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-50">Отмена</button>
-                              </div>
-                            </form>
-                          ) : (
-                            <button onClick={() => openReply(root.id)} className="text-xs text-blue-600 hover:underline mt-1">Ответить</button>
-                          )
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-          })()}
-
-          <div className="mt-6">
-            {!user ? (
-              <p className="text-sm text-gray-600">
-                <Link to="/login" state={{ from: location.pathname }} className="text-blue-600 hover:underline">Войдите</Link>
-                , чтобы оставить комментарий.
-              </p>
-            ) : isAdmin ? (
-              <ReaderMessageForm
-                onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
-                submitLabel="Отправить комментарий" isAdmin={true}
-              />
-            ) : profileLoading ? null : (
-              <ReaderMessageForm
-                onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
-                submitLabel="Отправить комментарий"
-                profile={readerProfile} onCreateProfile={handleCreateProfile}
-              />
+            {story.illustrations && story.illustrations.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-6">
+                {story.illustrations.map((url, i) => <img key={i} src={url} alt={`Илл. ${i + 1}`} className="rounded-lg max-w-full h-auto max-h-96 object-contain" />)}
+              </div>
             )}
-          </div>
-        </section>
-      )}
+            {story.content && <div className="font-story text-ink leading-relaxed whitespace-pre-wrap text-lg">{story.content}</div>}
+          </article>
+        )}
+
+        {!loading && story && (
+          <section className="mt-10 border-t border-border-light pt-6">
+            <h2 className="text-xl font-ui text-ink font-semibold mb-4">Комментарии</h2>
+
+            {(() => {
+              const { roots, replies } = buildCommentTree()
+              return commentsLoading ? <p className="text-muted text-sm">Загрузка сообщений...</p>
+                : commentsError ? <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">{commentsError}</div>
+                : roots.length === 0 ? <p className="text-muted text-sm">Комментариев пока нет — оставьте первый.</p>
+                : <div className="space-y-3">
+                    {roots.map(root => {
+                      const children = replies.get(root.id) ?? []
+                      return (
+                        <div key={root.id} className="border border-border-light rounded-lg p-3 bg-white">
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-1">
+                            <span className="font-ui text-ink font-medium">{root.author_name}</span>
+                            <span>{formatDateTime(root.created_at)}</span>
+                          </div>
+                          <p className="font-story text-ink leading-relaxed whitespace-pre-wrap break-words mb-2">{root.body}</p>
+
+                          {children.map(ch => (
+                            <div key={ch.id} className="ml-4 pl-3 border-l-2 border-accent mt-2 py-1 bg-blue-50 rounded">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted mb-1">
+                                <span className="font-ui text-accent font-medium">
+                                  {ch.is_author_reply ? 'Ответ автора' : ch.author_name}
+                                </span>
+                                <span>{formatDateTime(ch.created_at)}</span>
+                              </div>
+                              <p className="font-story text-ink leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
+                            </div>
+                          ))}
+
+                          {isAdmin && children.length === 0 && (
+                            replyForm === root.id ? (
+                              <form onSubmit={e => void handleReplySubmit(e)} className="mt-2" noValidate>
+                                {replyError && <div className="bg-red-50 border border-red-200 text-red-700 rounded px-2 py-1 text-xs mb-1">{replyError}</div>}
+                                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
+                                  placeholder="Текст ответа..."
+                                  className="w-full border border-border-light rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                                <div className="flex gap-1 mt-1">
+                                  <button type="submit" disabled={replying}
+                                    className="bg-accent text-white rounded px-3 py-1.5 text-xs font-ui font-medium hover:bg-accent/80 disabled:opacity-50">
+                                    {replying ? '…' : 'Отправить'}
+                                  </button>
+                                  <button type="button" onClick={closeReply}
+                                    className="border border-border-light rounded px-2 py-1.5 text-xs text-muted hover:bg-gray-50">Отмена</button>
+                                </div>
+                              </form>
+                            ) : (
+                              <button onClick={() => openReply(root.id)} className="text-xs text-accent hover:underline mt-1">Ответить</button>
+                            )
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+            })()}
+
+            <div className="mt-6">
+              {!user ? (
+                <p className="text-sm text-muted">
+                  <Link to="/login" state={{ from: location.pathname }} className="text-accent hover:underline">Войдите</Link>
+                  , чтобы оставить комментарий.
+                </p>
+              ) : isAdmin ? (
+                <ReaderMessageForm
+                  onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
+                  submitLabel="Отправить комментарий" isAdmin={true}
+                />
+              ) : profileLoading ? null : (
+                <ReaderMessageForm
+                  onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
+                  submitLabel="Отправить комментарий"
+                  profile={readerProfile} onCreateProfile={handleCreateProfile}
+                />
+              )}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   )
 }
