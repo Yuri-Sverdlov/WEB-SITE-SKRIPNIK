@@ -1,10 +1,10 @@
 # Задание (архитектор → кодер)
 
-**ID:** TASK-018  
-**Дата:** 2026-10-08  
+**ID:** TASK-019  
+**Дата:** 2026-10-09  
 **Статус:** к выполнению  
-**Блок:** F0 — хвосты E, фамилия «Скрыпник», техдолг  
-**Бриф:** `tasks/consultant-block-F-brief.md` · решения: `tasks/consultant-block-F-decisions.md`
+**Блок:** F1 — направление дизайна + превью страницы рассказа  
+**Бриф:** `tasks/consultant-block-F-brief.md` § F1 · решения: `tasks/consultant-block-F-decisions.md`
 
 **Старт сессии:** **`git pull`**, затем `AGENTS.md`, `CONTEXT.md`, этот файл.
 
@@ -12,121 +12,95 @@
 
 ## Цель
 
-Закрыть хвосты блока E, исправить фамилию автора (**Скрипник** → **Скрыпник**), миграция **0008**, порядок удаления рассказа, в git — `docs/` и `tasks/final-acceptance-E.md`. Подготовить **`src/config/site.ts`** (канонические строки сайта). UI/дизайн блока F — **не в этом TASK** (с TASK-019).
+Снять ориентиры с образцов, зафиксировать **`reference/design-direction.md`**, перенести палитру и шрифты в **`tailwind.config.js`**, показать **страницу рассказа** (`/stories/:id`) с **минимальной шапкой** в новом стиле. Поставить **Playwright** для скриншотов. **Полное меню F2, typography plugin (F3), остальные страницы — не в этом TASK.**
+
+**Остановка:** после TASK архитектор показывает пользователю скрин **`reference/screens/f1-story-detail.png`** — дальше F2 только после «ок» пользователя (не ваше решение).
 
 ---
 
-## Зафиксированные решения (не менять без архитектора)
+## Зафиксированные решения
 
 | Тема | Решение |
 |---|---|
-| Email для «Связи» (константа) | **`sverdlovy@yandex.ru`** (временно) |
-| Имя автора | **Александр Скрыпник** |
-| Название сайта | **Александр Скрыпник — рассказы** |
-| Ответ автора в UI | **`is_author_reply`** → бейдж «Ответ автора»; подпись — **`author_name` из записи** (без дублирующей константы фамилии в компонентах) |
-| Имя автора в двух местах | `src/config/site.ts` + SQL **`author_display_name()`** — описать в `docs/DEVELOPER.md` (раздел про сайт №2) |
+| Образцы | evgeny-yakubovich.art (структура), akunin.ru (настроение) — **не копировать дословно** |
+| Dembrandt | 1–2 попытки; **не блокер** — plan B ниже |
+| Превью | **StoryDetail** на обычном маршруте + **минимальная шапка** (название сайта из `site.ts`, без полного меню F2) |
+| Шрифт текста рассказа | с засечками, кириллица; основной текст **≥ 18px**; колонка ~60–70 знаков |
+| Playwright | devDependency; **`scripts/screens.mjs`**; ширина **1280**; вывод **`reference/screens/`** |
 | URL | не менять |
-| Playwright / Dembrandt | TASK-019 |
-| Push | **не делать** (локальный commit + REPORT) |
+| Push | **не делать** |
 
 ---
 
 ## Что сделать
 
-### 1. Git: добавить в репозиторий
+### 1. Dembrandt (ПК2, при наличии сети)
 
-- `docs/DEVELOPER.md`
-- `docs/Instruktsiya_dlya_avtora.docx`
-- `tasks/final-acceptance-E.md`
-
-(Не коммитить: `.env.local`, секреты, мусорные jpg в корне.)
-
-### 2. `src/config/site.ts` (новый файл)
-
-Экспорт констант (одно место правки для клона сайта №2):
-
-- полное имя автора;
-- заголовок сайта (вкладка / шапка — позже в F2);
-- **`contactEmail`:** `sverdlovy@yandex.ru`;
-- текст биографии из брифа F §2 (дословно).
-
-Пока **подключить минимально** (где правите строки в этом TASK). Полное использование — F2/F4.
-
-### 3. `deleteStory` — порядок удаления
-
-**Файл:** `src/api/adminStories.ts`
-
-Сначала **DELETE** строки в `stories`, затем удаление файлов в Storage (по URL из уже прочитанного массива `illustrations` **до** delete или сохранить URLs в переменную до delete). Цель: при сбое Storage не остаётся «рассказ без картинок в БД, но картинки ещё есть» / наоборот по брифу — **не оставаться с рассказом без картинок из-за порядка «сначала Storage»**. Итог: **сначала БД, потом Storage**; если delete БД failed — Storage не трогать.
-
-### 4. Миграция `supabase/migrations/0008_author_name_fix.sql`
-
-Идемпотентно где возможно. Комментарий: применяет **только пользователь** в SQL Editor.
-
-1. **`author_display_name()`** → возвращает **`Александр Скрыпник`**.
-2. **`reserved_author_names`:** добавить **`скрыпник`**, **`skrypnik`**, **`skripnik`** (старые строки не удалять).
-3. **UPDATE** `comments` SET `author_name = public.author_display_name()` WHERE **`is_author_reply = true`** AND `author_name` <> public.author_display_name() (или эквивалент).
-
-В **`tasks/REPORT.md`** — блок **«Шаг пользователя: 0008»** (путь к файлу, Success, напомнить применить).
-
-**Проверка для REPORT (SELECT, не менять данные читателей):**
-
-```sql
--- число строк — в REPORT
-select count(*) from public.comments
- where is_author_reply = false
-   and public.normalize_author_name(author_name) like '%' || public.normalize_author_name('скрипник') || '%';
+```bash
+npx dembrandt https://evgeny-yakubovich.art/ --design-md --screenshot
+npx dembrandt https://www.akunin.ru/main.html --design-md --screenshot
 ```
 
-Ожидание: **0** (или число + пояснение, если не 0 — **не** UPDATE читательских строк).
+При необходимости один раз: `npx dembrandt install-browser`.
 
-### 5. Фронт: ответ автора
+Сложить артефакты в:
 
-**`src/pages/StoryDetail.tsx`:** убрать константу **`AUTHOR_DISPLAY_NAME`**. Бейдж «Ответ автора» — если **`comment.is_author_reply`**. Отображаемое имя — **`author_name`**.
+- `reference/yakubovich/`
+- `reference/akunin/`
 
-Проверить **`src/api/comments.ts`** и прочие места — без захардкоженного «Скрипник».
+**Plan B** (если Dembrandt не сработал): в REPORT описать причину; палитру/шрифты взять по **скринам**, которые пользователь положит в те же папки (или по публичному виду сайтов). В **`design-direction.md`** явно указать источник («Dembrandt» / «ручной разбор скринов»).
 
-### 6. Тексты «Скрипnik» → «Скрыпник»
+### 2. `reference/design-direction.md`
 
-В scope TASK (люди видят или документация):
+Одна страница:
 
-- `docs/DEVELOPER.md` (+ абзац **два места для имени автора:** `site.ts` + `author_display_name()`);
-- `CONTEXT.md`;
-- **`ТЗ — сайт для писателя.md`**;
-- интерфейс `src/` (видимые строки);
-- комментарии в SQL/migrations **только если** там текст для людей (тех. имя репо **WEB-SITE-SKRIPNIK** / Vercel **не трогать**).
+- палитра: фон, текст, акcent, ссылки, служебный серый (4–6 цветов, hex);
+- шрифты (Google Fonts или локально): **serif** для тела рассказа, **sans или serif** для шапки/заголовков;
+- max-width колонки, `line-height`, базовый `font-size`;
+- что берём у Yakubovich / Akunin и что **не** берём.
 
-**Не править:** `AGENTS.md`, `PROJECT_LOG.md` (кроме если архитектор отдельно попросит).
+### 3. `tailwind.config.js`
 
-### 7. Поиск «Скрипnik» (смешанная раскладка)
+Расширить `theme`: цвета и `fontFamily` из design-direction (имена токенов понятные: `paper`, `ink`, `accent`, …).
 
-Поиск по **`src/`**, **`supabase/`**, **`docs/`** (rg/IDE) по подстрокам вроде **`Скрип`**, **`Skrip`**, **`skripnik`**, **`Скрипnik`** в **человекочитаемых** строках — исправить на **Скрыпник** / **`skrypnik`** / **`скрыпnik`** по смыслу (запрещённые имена — латиница **`skripnik`** в seed остаётся).
+Подключить шрифты (например `@import` в `src/index.css` или link в `index.html`).
 
-### 8. Шаг пользователя: скрипт защиты (не кодер)
+### 4. Минимальная шапка + StoryDetail (превью F1)
 
-В **`tasks/REPORT.md`** — инструкция:
+- Новый компонент, например **`src/components/SiteHeaderPreview.tsx`**: только заголовок сайта (`SITE_TITLE` из `src/config/site.ts`), спокойная типографика, фон/граница по теме. **Без** полного меню F2.
+- **`StoryDetail`:** обернуть контент рассказа (заголовок, мета, текст, иллюстрации) в стили темы — serif для текста, отступы, цвета. Комментарии можно **слегка** привести к палитре, но **глубокая** проработка комментариев — TASK-021.
+- **`App.tsx`:** показывать `SiteHeaderPreview` **на маршруте StoryDetail** (и при желании только там), старую dev-навигацию **не трогать** на остальных страницах (F2 уберёт).
 
-1. Войти **тестовым читателем** (аккаунт с никнеймом).
-2. Прогнать **часть 1** из `tasks/final-acceptance-E.md` (консоль F12).
-3. Прислать архитектору/вставить в REPORT **скрин или таблицу** `console.table`.
+**Не ставить** `@tailwindcss/typography` — это F3 (TASK-021).
 
-**Архитектор/пользователь** допишет таблицу в **`tasks/consultant-block-E-report.md`** (новый подраздел «Проверка на живой базе (скрипт F0)»). Кодер может добавить в E-report **заготовку таблицы** с колонками `id | what | OK | status` и пометкой «заполняет пользователь после прогона».
+### 5. Playwright
+
+- `npm install -D playwright` (или `@playwright/test` — на усмотрение, главное рабочий скрипт).
+- **`scripts/screens.mjs`**: CLI, опционально `BASE_URL` (default `http://localhost:5173`).
+- Для F1 минимум: сохранить **`reference/screens/f1-story-detail.png`** — страница **реального** рассказа (id передать аргументом или env `STORY_ID`; в REPORT указать, какой id использовали).
+- В **`package.json`**: скрипт `"screens": "node scripts/screens.mjs"`.
+
+Документировать в REPORT: перед снимком нужен `npm run dev` (или BASE_URL на Vercel).
+
+### 6. `.gitignore`
+
+Проверить: тяжёлые артефакты Dembrandt не нужны в git, если дублируют скрины — но **`reference/`** (design-direction, screens, md от dembrandt) **коммитить**.
 
 ---
 
-## Проверки (кодер)
+## Проверки
 
 ```text
 npm run build
 npm run lint
+npm run screens   # с dev-сервером и STORY_ID
 ```
 
-В **`tasks/REPORT.md`:** полный вывод команд; список изменённых файлов; hash commit; **не push**.
-
-**После применения 0008 пользователем** (если успели в сессии): ответ автора на странице рассказа — подпись **«Александр Скрыпник»**; читатель не может создать профиль **Скрыпnik** / **скрипnik** / **Skrypnik** (кратко в REPORT).
+**`tasks/REPORT.md`:** полный вывод build/lint; путь к **`reference/screens/f1-story-detail.png`**; Dembrandt или plan B; hash commit; **не push**.
 
 ---
 
 ## Git
 
-**Commit** локально, сообщение по смыслу: `TASK-018: F0 — Скрыпник, 0008, deleteStory, docs, site.ts`.  
+**Commit:** `TASK-019: F1 design-direction, tailwind theme, StoryDetail preview, Playwright screens`  
 **Push — не делать.**
