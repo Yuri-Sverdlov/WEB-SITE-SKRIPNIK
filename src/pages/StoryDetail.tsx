@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
-import StoriesTabNav from '../components/StoriesTabNav'
 import ReaderMessageForm from '../components/ReaderMessageForm'
-import SiteHeaderPreview from '../components/SiteHeaderPreview'
 import { useAuth } from '../contexts/AuthProvider'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 import { fetchComments, insertComment, insertAuthorReply } from '../api/comments'
@@ -12,6 +10,9 @@ import { fetchStoryById, incrementViews } from '../api/stories'
 import type { StoryDetail as StoryDetailType } from '../api/stories'
 import { fetchMyProfile, createProfile } from '../api/readerProfile'
 import type { ReaderProfile } from '../api/readerProfile'
+
+import { usePageTitle } from '../hooks/usePageTitle'
+import { AUTHOR_NAME } from '../config/site'
 
 function formatDateTime(value: string): string {
   if (!value) return '—'
@@ -58,7 +59,9 @@ export default function StoryDetail() {
       if (err) { setError(err); setLoading(false); return }
       if (!data) { setNotFound(true); setLoading(false); return }
       setStory(data)
-      const { error: rpcErr } = await incrementViews(storyId!)
+            // Заголовок вкладки
+            usePageTitle(`${data.title} — ${AUTHOR_NAME}`)
+            const { error: rpcErr } = await incrementViews(storyId!)
       if (cancelled) return
       if (rpcErr) { console.warn('RPC increment failed:', rpcErr); setDisplayedViews(data.views_count ?? 0) }
       else { setDisplayedViews((data.views_count ?? 0) + 1) }
@@ -147,10 +150,8 @@ export default function StoryDetail() {
 
   return (
     <div className="bg-paper min-h-screen">
-      <SiteHeaderPreview />
-      <div className="max-w-4xl mx-auto">
-        <StoriesTabNav />
-        {loading && <p className="text-muted">Загрузка...</p>}
+          <div className="max-w-4xl mx-auto">
+            {loading && <p className="text-muted">Загрузка...</p>}
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4">{error}</div>}
         {!loading && notFound && <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded p-3 mb-4">Рассказ не найден.</div>}
 
