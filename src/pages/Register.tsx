@@ -69,7 +69,7 @@ export default function Register() {
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
           <label htmlFor="email" className={labelClass}>
-            Email
+            Электронная почта
           </label>
           <input
             id="email"

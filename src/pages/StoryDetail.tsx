@@ -10,9 +10,8 @@ import { fetchStoryById, incrementViews } from '../api/stories'
 import type { StoryDetail as StoryDetailType } from '../api/stories'
 import { fetchMyProfile, createProfile } from '../api/readerProfile'
 import type { ReaderProfile } from '../api/readerProfile'
-
-import { usePageTitle } from '../hooks/usePageTitle'
 import { AUTHOR_NAME } from '../config/site'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function formatDateTime(value: string): string {
   if (!value) return '—'
@@ -48,6 +47,8 @@ export default function StoryDetail() {
   const [readerProfile, setReaderProfile] = useState<ReaderProfile | null | undefined>(undefined)
   const [profileLoading, setProfileLoading] = useState(true)
 
+  usePageTitle(story ? `${story.title} — ${AUTHOR_NAME}` : null)
+
   useEffect(() => {
     const storyId = id
     if (!storyId) { setError('ID рассказа не указан'); setLoading(false); return }
@@ -59,9 +60,7 @@ export default function StoryDetail() {
       if (err) { setError(err); setLoading(false); return }
       if (!data) { setNotFound(true); setLoading(false); return }
       setStory(data)
-            // Заголовок вкладки
-            usePageTitle(`${data.title} — ${AUTHOR_NAME}`)
-            const { error: rpcErr } = await incrementViews(storyId!)
+      const { error: rpcErr } = await incrementViews(storyId!)
       if (cancelled) return
       if (rpcErr) { console.warn('RPC increment failed:', rpcErr); setDisplayedViews(data.views_count ?? 0) }
       else { setDisplayedViews((data.views_count ?? 0) + 1) }

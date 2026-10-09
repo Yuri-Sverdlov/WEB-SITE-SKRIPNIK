@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthProvider'
 import { useIsAdmin } from '../hooks/useIsAdmin'
 import { SITE_TITLE } from '../config/site'
-import { usePageTitle } from '../hooks/usePageTitle'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   ['text-sm', isActive ? 'text-ink font-semibold' : 'text-ink hover:text-accent'].join(' ')
@@ -15,7 +14,6 @@ const sections = [
 ] as const
 
 export default function SiteHeader() {
-  usePageTitle(SITE_TITLE)
   const { user, loading, signOut } = useAuth()
   const { isAdmin, loading: adminLoading } = useIsAdmin()
   const navigate = useNavigate()
