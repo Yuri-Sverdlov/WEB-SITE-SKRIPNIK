@@ -62,6 +62,8 @@
 
 **Утверждение F1 (пользователь, 2026-10-09):** скрин `reference/screens/f1-story-detail.png` принят как начальный этап; переход к F2 (TASK-020).
 
+**Утверждение F3 (пользователь, 2026-10-11):** чтение рассказа по `reference/screens/f3-story-detail.png` — **временный** утверждённый вид; дальше F4–F5 без повторного стопа на F3.
+
 ## Артефакты Dembrandt
 
 - `reference/yakubovich/DESIGN.md` + `screenshot.png`
