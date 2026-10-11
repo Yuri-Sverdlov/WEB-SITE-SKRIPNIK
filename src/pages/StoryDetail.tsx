@@ -147,70 +147,95 @@ export default function StoryDetail() {
     try { return new Date(d).toLocaleDateString('ru-RU') } catch { return d }
   }
 
+  /** Разбить текст на абзацы по пустым строкам (формат БД не меняем) */
+  function renderParagraphs(text: string) {
+    return text
+      .split(/\n\s*\n/)
+      .map(p => p.trim())
+      .filter(Boolean)
+      .map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)
+  }
+
   return (
     <div className="bg-paper min-h-screen">
-          <div className="max-w-4xl mx-auto">
-            {loading && <p className="text-muted">Загрузка...</p>}
+      <div className="max-w-2xl mx-auto px-4">
+        {loading && <p className="text-muted">Загрузка...</p>}
         {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4">{error}</div>}
         {!loading && notFound && <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 rounded p-3 mb-4">Рассказ не найден.</div>}
 
         {!loading && story && (
-          <article className="font-story text-ink leading-relaxed">
-            <Link to="/stories/all" className="text-sm text-accent hover:underline mb-4 inline-block">&larr; к списку</Link>
-            <h1 className="text-3xl font-ui text-ink font-bold mb-3">{story.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-muted">
-              <span>{formatDate(story.published_at)}</span>
-              <span>{displayedViews ?? story.views_count ?? 0} просмотров</span>
-              {story.tags && story.tags.length > 0 && (
-                <span className="flex flex-wrap gap-1">
-                  {story.tags.map(tag => <span key={tag} className="bg-gray-100 text-muted rounded-full px-2.5 py-0.5 text-xs">{tag}</span>)}
-                </span>
-              )}
-            </div>
+          <article>
+            <Link to="/stories/all" className="text-sm text-accent hover:underline mb-6 inline-block">&larr; к списку</Link>
+
+            <header className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-ui text-ink font-bold mb-4 leading-tight">
+                {story.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted font-ui">
+                <span>{formatDate(story.published_at)}</span>
+                <span>{displayedViews ?? story.views_count ?? 0} просмотров</span>
+                {story.tags && story.tags.length > 0 && (
+                  <span className="flex flex-wrap gap-1">
+                    {story.tags.map(tag => (
+                      <span key={tag} className="bg-border-light/60 text-muted rounded-full px-2.5 py-0.5 text-xs">{tag}</span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            </header>
+
             {story.illustrations && story.illustrations.length > 0 && (
-              <div className="flex flex-wrap gap-3 mb-6">
-                {story.illustrations.map((url, i) => <img key={i} src={url} alt={`Илл. ${i + 1}`} className="rounded-lg max-w-full h-auto max-h-96 object-contain" />)}
+              <div className="mb-8 space-y-4">
+                {story.illustrations.map((url, i) => (
+                  <img key={i} src={url} alt={`Илл. ${i + 1}`}
+                    className="rounded-lg max-w-full h-auto mx-auto" />
+                ))}
               </div>
             )}
-            {story.content && <div className="font-story text-ink leading-relaxed whitespace-pre-wrap text-lg">{story.content}</div>}
+
+            {story.content && (
+              <div className="prose">
+                {renderParagraphs(story.content)}
+              </div>
+            )}
           </article>
         )}
 
         {!loading && story && (
-          <section className="mt-10 border-t border-border-light pt-6">
-            <h2 className="text-xl font-ui text-ink font-semibold mb-4">Комментарии</h2>
+          <section className="mt-16 pt-8 border-t border-border-light">
+            <h2 className="text-xl font-ui text-ink font-semibold mb-6">Комментарии</h2>
 
             {(() => {
               const { roots, replies } = buildCommentTree()
               return commentsLoading ? <p className="text-muted text-sm">Загрузка сообщений...</p>
                 : commentsError ? <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">{commentsError}</div>
                 : roots.length === 0 ? <p className="text-muted text-sm">Комментариев пока нет — оставьте первый.</p>
-                : <div className="space-y-3">
+                : <div className="space-y-4">
                     {roots.map(root => {
                       const children = replies.get(root.id) ?? []
                       return (
-                        <div key={root.id} className="border border-border-light rounded-lg p-3 bg-white">
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-1">
-                            <span className="font-ui text-ink font-medium">{root.author_name}</span>
+                        <div key={root.id} className="border border-border-light rounded-lg p-4 bg-white">
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-1 font-ui">
+                            <span className="text-ink font-medium">{root.author_name}</span>
                             <span>{formatDateTime(root.created_at)}</span>
                           </div>
-                          <p className="font-story text-ink leading-relaxed whitespace-pre-wrap break-words mb-2">{root.body}</p>
+                          <p className="text-ink leading-relaxed whitespace-pre-wrap break-words">{root.body}</p>
 
                           {children.map(ch => (
-                            <div key={ch.id} className="ml-4 pl-3 border-l-2 border-accent mt-2 py-1 bg-blue-50 rounded">
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted mb-1">
-                                <span className="font-ui text-accent font-medium">
+                            <div key={ch.id} className="ml-4 sm:ml-6 pl-4 border-l-2 border-accent/50 mt-3 py-2 bg-paper/60 rounded">
+                              <div className="flex flex-wrap items-center gap-2 text-xs mb-1 font-ui">
+                                <span className={ch.is_author_reply ? 'text-accent font-semibold' : 'text-muted'}>
                                   {ch.is_author_reply ? 'Ответ автора' : ch.author_name}
                                 </span>
-                                <span>{formatDateTime(ch.created_at)}</span>
+                                <span className="text-muted">{formatDateTime(ch.created_at)}</span>
                               </div>
-                              <p className="font-story text-ink leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
+                              <p className="text-ink leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
                             </div>
                           ))}
 
                           {isAdmin && children.length === 0 && (
                             replyForm === root.id ? (
-                              <form onSubmit={e => void handleReplySubmit(e)} className="mt-2" noValidate>
+                              <form onSubmit={e => void handleReplySubmit(e)} className="mt-3" noValidate>
                                 {replyError && <div className="bg-red-50 border border-red-200 text-red-700 rounded px-2 py-1 text-xs mb-1">{replyError}</div>}
                                 <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
                                   placeholder="Текст ответа..."
@@ -225,7 +250,7 @@ export default function StoryDetail() {
                                 </div>
                               </form>
                             ) : (
-                              <button onClick={() => openReply(root.id)} className="text-xs text-accent hover:underline mt-1">Ответить</button>
+                              <button onClick={() => openReply(root.id)} className="text-xs text-accent hover:underline mt-2 font-ui">Ответить</button>
                             )
                           )}
                         </div>
@@ -234,7 +259,7 @@ export default function StoryDetail() {
                   </div>
             })()}
 
-            <div className="mt-6">
+            <div className="mt-8">
               {!user ? (
                 <p className="text-sm text-muted">
                   <Link to="/login" state={{ from: location.pathname }} className="text-accent hover:underline">Войдите</Link>
