@@ -50,7 +50,11 @@ if (SHOTS.includes('story')) {
 }
 
 if (SHOTS.includes('home')) {
-  await shot(`${BASE_URL}/`, 'f2-home.png', 'Главная (F2)');
+  await shot(`${BASE_URL}/`, 'f4-home.png', 'Главная (F4)');
+}
+
+if (SHOTS.includes('contact')) {
+  await shot(`${BASE_URL}/contact`, 'f4-contact.png', 'Связь (F4)');
 }
 
 await browser.close();

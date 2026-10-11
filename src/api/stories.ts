@@ -103,6 +103,21 @@ export async function searchStories(
   return { data: data as StoryListItem[], count, error: null }
 }
 
+/** Последние рассказы (для главной), published_at DESC, limit по умолчанию 5 */
+export async function fetchLatestStories(limit = 5): Promise<StoriesPageResult> {
+  const { data, error, count } = await supabase
+    .from('stories')
+    .select('*', { count: 'exact' })
+    .order('published_at', { ascending: false })
+    .range(0, limit - 1)
+
+  if (error) {
+    return { data: [], count: null, error: error.message }
+  }
+
+  return { data: data as StoryListItem[], count, error: null }
+}
+
 /** Загрузка одного рассказа для страницы деталей */
 export async function fetchStoryById(id: string): Promise<{
   data: StoryDetail | null

@@ -1,13 +1,13 @@
-import { CONTACT_EMAIL } from '../config/site'
+import { CONTACT_EMAIL, CONTACT_INTRO } from '../config/site'
 
 export default function Contact() {
   return (
-    <div>
-      <h1 className="text-2xl font-ui text-ink font-semibold mb-4">Связь</h1>
-      <p className="text-muted text-sm mb-3">
-        Если вы хотите связаться с автором, напишите на:
-      </p>
-      <p className="font-story text-ink text-lg">
+    <div className="max-w-2xl mx-auto px-4">
+      <h1 className="text-2xl md:text-3xl font-ui text-ink font-semibold mb-6">Связь</h1>
+
+      <p className="font-story text-ink text-lg leading-relaxed mb-4">{CONTACT_INTRO}</p>
+
+      <p className="font-story text-lg">
         <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent hover:underline">{CONTACT_EMAIL}</a>
       </p>
     </div>
