@@ -12,6 +12,9 @@ export type AdminComment = {
   author_name: string
   body: string
   created_at: string
+  is_hidden: boolean
+  parent_id: string | null
+  is_author_reply: boolean
   story_title?: string
 }
 
@@ -21,6 +24,7 @@ export type AdminGuestbookEntry = {
   author_name: string
   body: string
   created_at: string
+  is_hidden: boolean
 }
 
 export type AdminBannedUser = {
@@ -73,7 +77,7 @@ export async function fetchAdminComments(
 
   const { data, error, count } = await supabase
     .from('comments')
-    .select('id, story_id, user_id, author_name, body, created_at', { count: 'exact' })
+    .select('id, story_id, user_id, author_name, body, created_at, is_hidden, parent_id, is_author_reply', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -104,6 +108,13 @@ export async function deleteComment(id: string): Promise<{ error: string | null 
   return { error: null }
 }
 
+/** Скрыть / показать комментарий (только колонка is_hidden) */
+export async function setCommentHidden(id: string, isHidden: boolean): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('comments').update({ is_hidden: isHidden }).eq('id', id)
+  if (error) return { error: mapErr(error.message) }
+  return { error: null }
+}
+
 /* ============================================================
    Гостевая книга
    ============================================================ */
@@ -116,7 +127,7 @@ export async function fetchAdminGuestbook(
 
   const { data, error, count } = await supabase
     .from('guestbook_entries')
-    .select('id, user_id, author_name, body, created_at', { count: 'exact' })
+    .select('id, user_id, author_name, body, created_at, is_hidden', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -126,6 +137,13 @@ export async function fetchAdminGuestbook(
 
 export async function deleteGuestbookEntry(id: string): Promise<{ error: string | null }> {
   const { error } = await supabase.from('guestbook_entries').delete().eq('id', id)
+  if (error) return { error: mapErr(error.message) }
+  return { error: null }
+}
+
+/** Скрыть / показать запись гостевой книги (только колонка is_hidden) */
+export async function setGuestbookHidden(id: string, isHidden: boolean): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('guestbook_entries').update({ is_hidden: isHidden }).eq('id', id)
   if (error) return { error: mapErr(error.message) }
   return { error: null }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   fetchAdminGuestbook,
   deleteGuestbookEntry,
+  setGuestbookHidden,
   banUser,
   countUserMessages,
   deleteAllUserMessages,
@@ -23,9 +24,12 @@ export default function AdminGuestbook() {
   const [hasMore, setHasMore] = useState(false)
   const [count, setCount] = useState<number | null>(null)
   const [emailMap, setEmailMap] = useState<Record<string, string>>({})
+  const [reloadKey, setReloadKey] = useState(0)
+  const [busy, setBusy] = useState(false)
 
   function refetch() {
     setPage(0)
+    setReloadKey((k) => k + 1)
   }
 
   useEffect(() => {
@@ -41,7 +45,7 @@ export default function AdminGuestbook() {
     }
     load()
     return () => { cancelled = true }
-  }, [page])
+  }, [page, reloadKey])
 
   // Email читателей
   useEffect(() => {
@@ -61,6 +65,15 @@ export default function AdminGuestbook() {
     const { error: err } = await deleteGuestbookEntry(item.id)
     if (err) { setError(err); return }
     refetch()
+  }
+
+  async function handleToggleHidden(item: AdminGuestbookEntry) {
+    if (busy) return
+    setBusy(true)
+    const { error: err } = await setGuestbookHidden(item.id, !item.is_hidden)
+    setBusy(false)
+    if (err) { setError(err); return }
+    setItems(prev => prev.map(i => (i.id === item.id ? { ...i, is_hidden: !item.is_hidden } : i)))
   }
 
   async function handleBan(item: AdminGuestbookEntry) {
@@ -94,20 +107,25 @@ export default function AdminGuestbook() {
       {!loading && items.length === 0 && <p className="text-muted text-sm">Записей нет.</p>}
 
       {!loading && items.map((it) => (
-        <div key={it.id} className="border border-border-light rounded p-3 mb-2 text-sm">
+        <div key={it.id} className={['border border-border-light rounded p-3 mb-2 text-sm', it.is_hidden ? 'opacity-50 bg-white/40' : ''].join(' ')}>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted mb-1">
-            <span>{it.author_name}</span>
+            <span className="text-ink font-medium">{it.author_name}</span>
+            {it.is_hidden && <span className="text-orange-600 font-medium">скрыт</span>}
             <span>{fmt(it.created_at)}</span>
           </div>
           <p className="text-ink mb-2 whitespace-pre-wrap">{it.body}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void handleToggleHidden(it)} disabled={busy}
+              className="text-ink hover:underline text-xs disabled:opacity-40">
+              {it.is_hidden ? 'Показать' : 'Скрыть'}
+            </button>
             <button onClick={() => void handleDelete(it)} className="text-red-600 hover:underline text-xs">Удалить</button>
             {it.user_id && <>
               <button onClick={() => void handleBan(it)} className="text-orange-600 hover:underline text-xs">Заблокировать</button>
               <button onClick={() => void handleDeleteAll(it)} className="text-red-700 hover:underline text-xs">Удалить все</button>
             </>}
           </div>
-          <div className="text-[10px] text-gray-300 mt-1">ID: {it.user_id || '—'} {it.user_id && emailMap[it.user_id] ? <span className="text-muted">{emailMap[it.user_id]}</span> : ''}</div>
+          <div className="text-[10px] text-muted/70 mt-1">ID: {it.user_id || '—'} {it.user_id && emailMap[it.user_id] ? <span className="text-muted">{emailMap[it.user_id]}</span> : ''}</div>
         </div>
       ))}
 

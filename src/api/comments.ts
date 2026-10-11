@@ -14,6 +14,7 @@ export type CommentItem = {
   created_at: string
   parent_id: string | null
   is_author_reply: boolean
+  is_hidden: boolean
 }
 
 export type CommentsResult = {
@@ -32,7 +33,7 @@ export type InsertCommentResult =
 export async function fetchComments(storyId: string): Promise<CommentsResult> {
   const { data, error } = await supabase
     .from('comments')
-    .select('id, author_name, body, created_at, parent_id, is_author_reply')
+    .select('id, author_name, body, created_at, parent_id, is_author_reply, is_hidden')
     .eq('story_id', storyId)
     .order('created_at', { ascending: true })
 

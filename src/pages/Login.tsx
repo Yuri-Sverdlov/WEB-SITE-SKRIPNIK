@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { signIn, resetPassword } from '../api/auth'
+import { fetchIsAdmin } from '../api/admin'
 
 const inputClass =
   'w-full border border-border-light rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
@@ -38,6 +39,13 @@ export default function Login() {
 
     if (!result.ok) {
       setError(result.message)
+      return
+    }
+
+    // Автор: уводим в кабинет — на исходный /admin-адрес либо на «Комментарии».
+    const { isAdmin } = await fetchIsAdmin()
+    if (isAdmin) {
+      navigate(from.startsWith('/admin') ? from : '/admin/comments')
       return
     }
 

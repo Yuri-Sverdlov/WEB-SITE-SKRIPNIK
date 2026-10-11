@@ -118,7 +118,8 @@ export default function ReaderMessageForm({
   }
 
   // ====== Режим: читатель с профилем (без поля имени) ======
-  const hideNameField = !isAdmin && profile !== null
+  // Автор: подпись задаёт БД → поля «Имя» нет. Читатель с профилем: имя из профиля.
+  const hideNameField = isAdmin || profile !== null
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -151,9 +152,9 @@ export default function ReaderMessageForm({
         </div>
       )}
 
-      {hideNameField && (
+      {hideNameField && !isAdmin && profile && (
         <p className="text-sm text-muted">
-          Вы пишете как: <strong>{profile!.display_name}</strong>
+          Вы пишете как: <strong>{profile.display_name}</strong>
         </p>
       )}
 

@@ -42,7 +42,7 @@ export default function SiteHeader() {
           ) : user ? (
             <>
               {!adminLoading && isAdmin && (
-                <NavLink to="/admin/stories" end className={navClass}>
+                <NavLink to="/admin/comments" end={false} className={navClass}>
                   Кабинет
                 </NavLink>
               )}

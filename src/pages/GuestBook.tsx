@@ -4,6 +4,7 @@ import ReaderMessageList from '../components/ReaderMessageList'
 import type { ReaderMessage } from '../components/ReaderMessageList'
 import ReaderMessageForm from '../components/ReaderMessageForm'
 import { useAuth } from '../contexts/AuthProvider'
+import { useIsAdmin } from '../hooks/useIsAdmin'
 import { fetchGuestbookEntries, insertGuestbookEntry } from '../api/guestbook'
 import type { GuestbookEntry } from '../api/guestbook'
 import { fetchMyProfile, createProfile } from '../api/readerProfile'
@@ -12,6 +13,7 @@ import type { ReaderProfile } from '../api/readerProfile'
 export default function GuestBook() {
   const location = useLocation()
   const { user } = useAuth()
+  const { isAdmin } = useIsAdmin()
 
   const [entries, setEntries] = useState<GuestbookEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -87,6 +89,7 @@ export default function GuestBook() {
             onSubmit={handleSubmitEntry} submitting={formSubmitting} error={formError}
             submitLabel="Отправить запись"
             profile={readerProfile} onCreateProfile={handleCreateProfile}
+            isAdmin={isAdmin}
           />
         )}
       </div>

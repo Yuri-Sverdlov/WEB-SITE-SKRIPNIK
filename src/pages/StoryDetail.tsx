@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
 import ReaderMessageForm from '../components/ReaderMessageForm'
 import { useAuth } from '../contexts/AuthProvider'
 import { useIsAdmin } from '../hooks/useIsAdmin'
-import { fetchComments, insertComment, insertAuthorReply } from '../api/comments'
+import { fetchComments, insertComment } from '../api/comments'
 import type { CommentItem } from '../api/comments'
 import { fetchStoryById, incrementViews } from '../api/stories'
 import type { StoryDetail as StoryDetailType } from '../api/stories'
@@ -40,10 +39,6 @@ export default function StoryDetail() {
   const [commentsError, setCommentsError] = useState<string | null>(null)
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [replyForm, setReplyForm] = useState<string | null>(null)
-  const [replyText, setReplyText] = useState('')
-  const [replyError, setReplyError] = useState<string | null>(null)
-  const [replying, setReplying] = useState(false)
   const [readerProfile, setReaderProfile] = useState<ReaderProfile | null | undefined>(undefined)
   const [profileLoading, setProfileLoading] = useState(true)
 
@@ -116,28 +111,26 @@ export default function StoryDetail() {
     return result
   }
 
-  function openReply(commentId: string) { setReplyForm(commentId); setReplyText(''); setReplyError(null) }
-  function closeReply() { setReplyForm(null); setReplyText(''); setReplyError(null) }
-
-  async function handleReplySubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!id || !user || !replyForm) return
-    setReplying(true); setReplyError(null)
-    const result = await insertAuthorReply({ storyId: id, userId: user.id, body: replyText, parentId: replyForm })
-    setReplying(false)
-    if (!result.ok) { setReplyError(result.message); return }
-    closeReply()
-    const refreshed = await fetchComments(id)
-    setComments(refreshed.data); setCommentsError(refreshed.error)
-  }
-
+  /**
+   * Дерево «корень → ответы». Скрытое не показываем даже автору
+   * (на витрине он видит как читатель): скрытый корень → нет записи,
+   * скрытый родитель → его ответы тоже не показываем.
+   */
   function buildCommentTree() {
     const roots: CommentItem[] = []
     const replies = new Map<string, CommentItem[]>()
+    const visibleRootIds = new Set<string>()
+
     for (const c of comments) {
-      if (c.parent_id) {
+      if (!c.parent_id && !c.is_hidden) {
+        roots.push(c)
+        visibleRootIds.add(c.id)
+      }
+    }
+    for (const c of comments) {
+      if (c.parent_id && !c.is_hidden && visibleRootIds.has(c.parent_id)) {
         const arr = replies.get(c.parent_id) ?? []; arr.push(c); replies.set(c.parent_id, arr)
-      } else { roots.push(c) }
+      }
     }
     return { roots, replies }
   }
@@ -147,13 +140,13 @@ export default function StoryDetail() {
     try { return new Date(d).toLocaleDateString('ru-RU') } catch { return d }
   }
 
-  /** Разбить текст на абзацы по пустым строкам (формат БД не меняем) */
+  /** Каждый перевод строки — новый абзац; пустые строки схлопываются. */
   function renderParagraphs(text: string) {
     return text
-      .split(/\n\s*\n/)
+      .split('\n')
       .map(p => p.trim())
       .filter(Boolean)
-      .map((p, i) => <p key={i} className="whitespace-pre-wrap">{p}</p>)
+      .map((p, i) => <p key={i}>{p}</p>)
   }
 
   return (
@@ -222,37 +215,15 @@ export default function StoryDetail() {
                           <p className="text-ink leading-relaxed whitespace-pre-wrap break-words">{root.body}</p>
 
                           {children.map(ch => (
-                            <div key={ch.id} className="ml-4 sm:ml-6 pl-4 border-l-2 border-accent/50 mt-3 py-2 bg-paper/60 rounded">
-                              <div className="flex flex-wrap items-center gap-2 text-xs mb-1 font-ui">
-                                <span className={ch.is_author_reply ? 'text-accent font-semibold' : 'text-muted'}>
-                                  {ch.is_author_reply ? 'Ответ автора' : ch.author_name}
-                                </span>
-                                <span className="text-muted">{formatDateTime(ch.created_at)}</span>
+                            <div key={ch.id} className="mt-3 pl-5 sm:pl-6 border-l border-border-light">
+                              <div className="flex flex-wrap items-baseline gap-2 text-sm mb-1 font-ui">
+                                <span className="text-ink font-semibold">{ch.author_name}</span>
+                                <span className="text-xs text-muted">Ответ автора</span>
+                                <span className="text-xs text-muted">{formatDateTime(ch.created_at)}</span>
                               </div>
                               <p className="text-ink leading-relaxed whitespace-pre-wrap break-words text-sm">{ch.body}</p>
                             </div>
                           ))}
-
-                          {isAdmin && children.length === 0 && (
-                            replyForm === root.id ? (
-                              <form onSubmit={e => void handleReplySubmit(e)} className="mt-3" noValidate>
-                                {replyError && <div className="bg-red-50 border border-red-200 text-red-700 rounded px-2 py-1 text-xs mb-1">{replyError}</div>}
-                                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3}
-                                  placeholder="Текст ответа..."
-                                  className="w-full border border-border-light rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-                                <div className="flex gap-1 mt-1">
-                                  <button type="submit" disabled={replying}
-                                    className="bg-accent text-white rounded px-3 py-1.5 text-xs font-ui font-medium hover:bg-accent/80 disabled:opacity-50">
-                                    {replying ? '…' : 'Отправить'}
-                                  </button>
-                                  <button type="button" onClick={closeReply}
-                                    className="border border-border-light rounded px-2 py-1.5 text-xs text-muted hover:bg-gray-50">Отмена</button>
-                                </div>
-                              </form>
-                            ) : (
-                              <button onClick={() => openReply(root.id)} className="text-xs text-accent hover:underline mt-2 font-ui">Ответить</button>
-                            )
-                          )}
                         </div>
                       )
                     })}
@@ -266,10 +237,10 @@ export default function StoryDetail() {
                   , чтобы оставить комментарий.
                 </p>
               ) : isAdmin ? (
-                <ReaderMessageForm
-                  onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
-                  submitLabel="Отправить комментарий" isAdmin={true}
-                />
+                <p className="text-sm text-muted">
+                  Отвечать на отзывы — в{' '}
+                  <Link to="/admin/comments" className="text-accent hover:underline">Кабинете</Link>.
+                </p>
               ) : profileLoading ? null : (
                 <ReaderMessageForm
                   onSubmit={handleSubmitComment} submitting={formSubmitting} error={formError}
