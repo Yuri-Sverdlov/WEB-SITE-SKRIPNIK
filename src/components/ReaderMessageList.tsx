@@ -36,7 +36,7 @@ export default function ReaderMessageList({
   emptyText = 'Пока сообщений нет.',
 }: Props) {
   if (loading) {
-    return <p className="text-gray-500 text-sm">Загрузка сообщений...</p>
+    return <p className="text-muted text-sm">Загрузка сообщений...</p>
   }
 
   if (error) {
@@ -48,7 +48,7 @@ export default function ReaderMessageList({
   }
 
   if (items.length === 0) {
-    return <p className="text-gray-500 text-sm">{emptyText}</p>
+    return <p className="text-muted text-sm">{emptyText}</p>
   }
 
   return (
@@ -56,13 +56,13 @@ export default function ReaderMessageList({
       {items.map((item) => (
         <li
           key={item.id}
-          className="border border-gray-200 rounded-lg p-3 bg-white"
+          className="border border-border-light rounded-lg p-3 bg-white"
         >
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-1">
-            <span className="font-medium text-gray-800">{item.authorName}</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-1">
+            <span className="font-medium text-ink">{item.authorName}</span>
             <span>{formatDateTime(item.createdAt)}</span>
           </div>
-          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-ink leading-relaxed whitespace-pre-wrap break-words">
             {item.body}
           </p>
         </li>

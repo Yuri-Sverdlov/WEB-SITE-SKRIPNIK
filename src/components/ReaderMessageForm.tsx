@@ -21,8 +21,8 @@ type Props = {
 }
 
 const inputClass =
-  'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400'
-const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
+  'w-full border border-border-light rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
+const labelClass = 'block text-sm font-medium text-ink mb-1'
 
 /**
  * Форма отправки сообщения.
@@ -61,7 +61,7 @@ export default function ReaderMessageForm({
   // ====== Режим: читатель без профиля ======
   if (!isAdmin && profile === null && onCreateProfile) {
     if (creating) {
-      return <p className="text-gray-500 text-sm">Создание профиля…</p>
+      return <p className="text-muted text-sm">Создание профиля…</p>
     }
 
     return (
@@ -90,7 +90,7 @@ export default function ReaderMessageForm({
           className="space-y-3"
           noValidate
         >
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Выберите имя, под которым вас будут видеть. <strong>Изменить его потом нельзя.</strong>
           </p>
           <div>
@@ -108,7 +108,7 @@ export default function ReaderMessageForm({
           </div>
           <button
             type="submit"
-            className="bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="bg-accent text-white rounded px-4 py-2 text-sm font-medium hover:bg-accent/80 transition-colors"
           >
             Выбрать имя
           </button>
@@ -152,7 +152,7 @@ export default function ReaderMessageForm({
       )}
 
       {hideNameField && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Вы пишете как: <strong>{profile!.display_name}</strong>
         </p>
       )}
@@ -184,7 +184,7 @@ export default function ReaderMessageForm({
           rows={4}
           className={`${inputClass} resize-y`}
         />
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-muted mt-1">
           {body.trim().length} / {bodyMax}
         </p>
       </div>
@@ -192,7 +192,7 @@ export default function ReaderMessageForm({
       <button
         type="submit"
         disabled={submitting}
-        className="bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="bg-accent text-white rounded px-4 py-2 text-sm font-medium hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {submitting ? 'Отправка...' : submitLabel}
       </button>

@@ -88,18 +88,18 @@ export default function AdminGuestbook() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-3">Гостевая книга</h1>
+      <h1 className="text-2xl font-ui text-ink font-semibold mb-3">Гостевая книга</h1>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-3 text-sm">{error}</div>}
-      {loading && <p className="text-gray-500 text-sm">Загрузка…</p>}
-      {!loading && items.length === 0 && <p className="text-gray-500 text-sm">Записей нет.</p>}
+      {loading && <p className="text-muted text-sm">Загрузка…</p>}
+      {!loading && items.length === 0 && <p className="text-muted text-sm">Записей нет.</p>}
 
       {!loading && items.map((it) => (
-        <div key={it.id} className="border border-gray-200 rounded p-3 mb-2 text-sm">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-1">
+        <div key={it.id} className="border border-border-light rounded p-3 mb-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted mb-1">
             <span>{it.author_name}</span>
             <span>{fmt(it.created_at)}</span>
           </div>
-          <p className="text-gray-800 mb-2 whitespace-pre-wrap">{it.body}</p>
+          <p className="text-ink mb-2 whitespace-pre-wrap">{it.body}</p>
           <div className="flex gap-2">
             <button onClick={() => void handleDelete(it)} className="text-red-600 hover:underline text-xs">Удалить</button>
             {it.user_id && <>
@@ -107,17 +107,17 @@ export default function AdminGuestbook() {
               <button onClick={() => void handleDeleteAll(it)} className="text-red-700 hover:underline text-xs">Удалить все</button>
             </>}
           </div>
-          <div className="text-[10px] text-gray-300 mt-1">ID: {it.user_id || '—'} {it.user_id && emailMap[it.user_id] ? <span className="text-gray-500">{emailMap[it.user_id]}</span> : ''}</div>
+          <div className="text-[10px] text-gray-300 mt-1">ID: {it.user_id || '—'} {it.user_id && emailMap[it.user_id] ? <span className="text-muted">{emailMap[it.user_id]}</span> : ''}</div>
         </div>
       ))}
 
       {!loading && (
         <div className="flex justify-center gap-4 mt-4 text-sm">
           <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
-            className="rounded border px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50">Назад</button>
-          <span className="text-gray-500 py-1">Страница {page + 1}{count !== null ? ` (${count})` : ''}</span>
+            className="rounded border px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/60">Назад</button>
+          <span className="text-muted py-1">Страница {page + 1}{count !== null ? ` (${count})` : ''}</span>
           <button disabled={!hasMore} onClick={() => setPage(p => p + 1)}
-            className="rounded border px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50">Вперёд</button>
+            className="rounded border px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/60">Вперёд</button>
         </div>
       )}
     </div>

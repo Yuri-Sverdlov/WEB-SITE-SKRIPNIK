@@ -80,7 +80,7 @@ export default function AdminStoriesList() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-3">Рассказы</h1>
+      <h1 className="text-2xl font-ui text-ink font-semibold mb-3">Рассказы</h1>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-3 text-sm">
@@ -94,20 +94,20 @@ export default function AdminStoriesList() {
           value={q}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Поиск по заголовку и тексту…"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-border-light rounded px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <Link
           to="/admin/stories/new"
-          className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="bg-accent text-white rounded px-4 py-1.5 text-sm font-medium hover:bg-accent/80 transition-colors"
         >
           + Создать рассказ
         </Link>
       </div>
 
-      {loading && <p className="text-gray-500 text-sm">Загрузка…</p>}
+      {loading && <p className="text-muted text-sm">Загрузка…</p>}
 
       {!loading && !error && stories.length === 0 && (
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted text-sm">
           {q ? 'Ничего не найдено.' : 'Нет рассказов.'}
         </p>
       )}
@@ -116,7 +116,7 @@ export default function AdminStoriesList() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-600">
+              <tr className="border-b border-border-light text-left text-muted">
                 <th className="py-2 px-2">Заголовок</th>
                 <th className="py-2 px-2 w-28">Дата</th>
                 <th className="py-2 px-2 w-20 text-right">Просм.</th>
@@ -125,21 +125,21 @@ export default function AdminStoriesList() {
             </thead>
             <tbody>
               {stories.map((story) => (
-                <tr key={story.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2 px-2 text-gray-800 max-w-xs truncate">
+                <tr key={story.id} className="border-b border-border-light hover:bg-white/60">
+                  <td className="py-2 px-2 text-ink max-w-xs truncate">
                     {story.title}
                   </td>
-                  <td className="py-2 px-2 text-gray-500 text-xs">
+                  <td className="py-2 px-2 text-muted text-xs">
                     {formatDate(story.published_at)}
                   </td>
-                  <td className="py-2 px-2 text-gray-500 text-right">
+                  <td className="py-2 px-2 text-muted text-right">
                     {story.views_count ?? 0}
                   </td>
                   <td className="py-2 px-2 flex gap-2">
                     <button
                       type="button"
                       onClick={() => navigate(`/admin/stories/${story.id}/edit`)}
-                      className="text-blue-600 hover:underline text-xs"
+                      className="text-accent hover:underline text-xs"
                     >
                       Редактировать
                     </button>
@@ -164,19 +164,19 @@ export default function AdminStoriesList() {
           <button
             disabled={page === 0}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            className="rounded border border-border-light px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/60 transition-colors"
           >
             Назад
           </button>
 
-          <span className="text-gray-500 py-1">
+          <span className="text-muted py-1">
             Страница {page + 1}{total !== null ? ` (${total} всего)` : ''}
           </span>
 
           <button
             disabled={!hasMore}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            className="rounded border border-border-light px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/60 transition-colors"
           >
             Вперёд
           </button>

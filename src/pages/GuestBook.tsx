@@ -67,8 +67,8 @@ export default function GuestBook() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Гостевая книга</h1>
+    <div className="max-w-2xl mx-auto px-4">
+      <h1 className="text-2xl md:text-3xl font-ui text-ink font-semibold mb-6">Гостевая книга</h1>
 
       <ReaderMessageList
         items={entries.map(e => ({ id: e.id, authorName: e.author_name, body: e.body, createdAt: e.created_at } as ReaderMessage))}
@@ -78,8 +78,8 @@ export default function GuestBook() {
 
       <div className="mt-6">
         {!user ? (
-          <p className="text-sm text-gray-600">
-            <Link to="/login" state={{ from: location.pathname }} className="text-blue-600 hover:underline">Войдите</Link>
+          <p className="text-sm text-muted">
+            <Link to="/login" state={{ from: location.pathname }} className="text-accent hover:underline">Войдите</Link>
             , чтобы оставить запись в гостевой книге.
           </p>
         ) : profileLoading ? null : (

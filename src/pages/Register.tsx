@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '../api/auth'
 
 const inputClass =
-  'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400'
-const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
+  'w-full border border-border-light rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent'
+const labelClass = 'block text-sm font-medium text-ink mb-1'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -51,8 +51,8 @@ export default function Register() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8">
-      <h1 className="text-2xl font-bold mb-6">Регистрация</h1>
+    <div className="max-w-md mx-auto px-4 mt-8">
+      <h1 className="text-2xl font-ui text-ink font-semibold mb-6">Регистрация</h1>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4 text-sm">
@@ -93,7 +93,7 @@ export default function Register() {
             autoComplete="new-password"
             className={inputClass}
           />
-          <p className="text-xs text-gray-400 mt-1">Не менее 6 символов</p>
+          <p className="text-xs text-muted mt-1">Не менее 6 символов</p>
         </div>
 
         <div>
@@ -113,15 +113,15 @@ export default function Register() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-blue-600 text-white rounded py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-accent text-white rounded py-2 text-sm font-medium hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? 'Регистрация...' : 'Зарегистрироваться'}
         </button>
       </form>
 
-      <p className="text-sm text-gray-500 mt-4">
+      <p className="text-sm text-muted mt-4">
         Уже есть аккаунт?{' '}
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-accent hover:underline">
           Войти
         </Link>
       </p>

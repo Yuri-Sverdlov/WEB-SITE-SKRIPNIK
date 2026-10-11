@@ -21,12 +21,12 @@ export default function StoriesTabNav() {
 
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-bold mb-3">
+      <h1 className="text-2xl md:text-3xl font-ui text-ink font-semibold mb-3">
         {q ? 'Результаты поиска' : 'Рассказы'}
       </h1>
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <div className="flex gap-1 border-b border-gray-200 flex-1 min-w-0">
+        <div className="flex gap-1 border-b border-border-light flex-1 min-w-0">
           {tabs.map((tab) => {
             const active = location.pathname === tab.to
             return (
@@ -35,8 +35,8 @@ export default function StoriesTabNav() {
                 to={tab.to}
                 className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
                   active
-                    ? 'text-blue-700 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'text-accent border-b-2 border-accent'
+                    : 'text-muted hover:text-ink hover:bg-white/60'
                 }`}
               >
                 {tab.label}
@@ -50,7 +50,7 @@ export default function StoriesTabNav() {
           value={q}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Поиск рассказов..."
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+          className="border border-border-light rounded px-3 py-1.5 text-sm w-64 font-ui focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
         />
       </div>
     </div>
