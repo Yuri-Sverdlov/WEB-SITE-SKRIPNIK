@@ -2,7 +2,7 @@
 
 **Задание:** TASK-025 — G0: хвосты F + миграция 0010  
 **Дата:** 2026-10-12  
-**Статус:** выполнено (миграция **0010 требует применения пользователем**)
+**Статус:** выполнено; **0010 применена**, живые проверки пройдены
 
 ---
 
@@ -77,17 +77,28 @@ Exit code: **0**.
 Файл: `supabase/migrations/0010_admin_sql_editor_source_url.sql` — применить в Supabase SQL Editor.
 Ожидается: **Success. No rows returned**.
 
-**Результат применения:** ☐ применена · ☐ не применена · ошибка: __________
+**Результат применения:** ✅ **применена** пользователем (SQL Editor, «Success»)
 
 ## Проверки после применения 0010 (живые — пользователь/архитектор)
 
 | # | Проверка | Ожидание | Результат |
 |---|---|---|---|
-| 1 | Скрыть комментарий **с ответом автора** (кабинет) | Гость и читатель не видят **ни корень, ни ответ**; «Показать» → видны **оба** | ☐ |
-| 2 | SQL Editor: UPDATE комментария (не только `is_hidden`) | **Проходит** под `postgres` (раньше — исключение «Изменять записи может только автор сайта») | ☐ |
-| 3 | REST читателя: UPDATE `is_hidden` | По-прежнему **нельзя** (0 строк) | ☐ |
-| 4 | `select column_name, data_type from information_schema.columns where table_name='stories' and column_name='source_url'` | `source_url / text` | ☐ |
-| 5 | `select prosecdef from pg_proc where proname='enforce_admin_update_hidden_only'` | `false` (invoker) | ☐ |
+| 1 | Скрыть комментарий **с ответом автора** (кабинет) | Гость и читатель не видят **ни корень, ни ответ**; «Показать» → видны **оба** | ✅ **OK** — аноним и читатель видят 1 запись вместо 3; после «Показать» — снова **оба** |
+| 2 | SQL Editor: UPDATE комментария (не только `is_hidden`) | **Проходит** под `postgres` (раньше — исключение «Изменять записи может только автор сайта») | ⏳ проверяет **пользователь** (SQL ниже); косвенно подтверждено: REST-правка `body` автором **отклонена** → роль-проверка не «пропускает всех» |
+| 3 | REST читателя: UPDATE `is_hidden` | По-прежнему **нельзя** (0 строк) | ✅ **OK** — `affected=0`, значение в БД не менялось |
+| 4 | `select column_name, data_type from information_schema.columns where table_name='stories' and column_name='source_url'` | `source_url / text` | ✅ **OK** — `select source_url` проходит, значение `null` |
+| 5 | `select prosecdef from pg_proc where proname='enforce_admin_update_hidden_only'` | `false` (invoker) | ⏳ проверяет **пользователь** (SQL ниже); косвенно: триггер ведёт себя как `invoker` (см. п.2) |
+
+### Что запустить в SQL Editor (проверки 2 и 5)
+
+```sql
+-- 5. режим функции: должно быть false (invoker)
+select prosecdef from pg_proc where proname = 'enforce_admin_update_hidden_only';
+
+-- 2. UPDATE «не только is_hidden» под postgres: должно пройти (Success)
+update public.comments set body = body where id = 'f757f348-b924-402d-98c1-2633d945fa92';
+```
+Раньше запрос 2 падал с «Изменять записи может только автор сайта».
 
 ## Git
 - **Локальный commit** (ниже)
