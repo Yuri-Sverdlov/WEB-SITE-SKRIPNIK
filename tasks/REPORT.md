@@ -87,7 +87,7 @@ Exit code: **0**.
 | 2 | SQL Editor: UPDATE комментария (не только `is_hidden`) | **Проходит** под `postgres` (раньше — исключение «Изменять записи может только автор сайта») | ⏳ проверяет **пользователь** (SQL ниже); косвенно подтверждено: REST-правка `body` автором **отклонена** → роль-проверка не «пропускает всех» |
 | 3 | REST читателя: UPDATE `is_hidden` | По-прежнему **нельзя** (0 строк) | ✅ **OK** — `affected=0`, значение в БД не менялось |
 | 4 | `select column_name, data_type from information_schema.columns where table_name='stories' and column_name='source_url'` | `source_url / text` | ✅ **OK** — `select source_url` проходит, значение `null` |
-| 5 | `select prosecdef from pg_proc where proname='enforce_admin_update_hidden_only'` | `false` (invoker) | ⏳ проверяет **пользователь** (SQL ниже); косвенно: триггер ведёт себя как `invoker` (см. п.2) |
+| 5 | `prosecdef` у `enforce_admin_update_hidden_only` | `false` (invoker) | ✅ **OK** — пользователь в SQL Editor: `prosecdef = false` |
 
 ### Что запустить в SQL Editor (проверки 2 и 5)
 
