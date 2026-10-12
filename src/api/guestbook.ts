@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient'
 import { mapReaderMessageError } from './messageErrors'
-import { validateReaderMessageInput } from './comments'
+import { validateReaderMessageInput, BODY_MIN, BODY_MAX } from './comments'
 
 export type GuestbookEntry = {
   id: string
@@ -33,18 +33,29 @@ export async function fetchGuestbookEntries(): Promise<GuestbookResult> {
 }
 
 /**
- * Запись в гостевой книге от вошедшего читателя.
+ * Запись в гостевой книге.
  * `story_id` не передаём — записи не привязаны к рассказу.
- * Валидация 2-40 / 1-2000 общая с комментариями (`comments.ts`).
+ * Имя: читатель — 2–40 (общая валидация с комментариями). Автор сайта
+ * пишет без поля «Имя» — подпись задаёт БД (`author_display_name()`),
+ * поэтому при пустом имени проверяется только текст.
  */
 export async function insertGuestbookEntry(input: {
   userId: string
   authorName: string
   body: string
 }): Promise<InsertGuestbookResult> {
-  const invalid = validateReaderMessageInput(input.authorName, input.body)
-  if (invalid) {
-    return { ok: false, message: invalid }
+  const hasName = input.authorName.trim().length > 0
+
+  if (hasName) {
+    const invalid = validateReaderMessageInput(input.authorName, input.body)
+    if (invalid) {
+      return { ok: false, message: invalid }
+    }
+  } else {
+    const text = input.body.trim()
+    if (text.length < BODY_MIN || text.length > BODY_MAX) {
+      return { ok: false, message: `Текст должен быть от ${BODY_MIN} до ${BODY_MAX} символов` }
+    }
   }
 
   const { error } = await supabase.from('guestbook_entries').insert({
