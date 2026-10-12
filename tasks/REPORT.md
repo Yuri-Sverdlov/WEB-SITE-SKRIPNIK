@@ -106,14 +106,10 @@ update public.comments set body = body where id = 'f757f348-b924-402d-98c1-2633d
 
 **Push — делает архитектор** после проверки этого REPORT. Всё готово, рабочее дерево чистое.
 
-`local main` впереди `origin/main` на **5** коммитов, готовы к отправке:
+`local main` впереди `origin/main`. Актуальный список к отправке:
 
 ```
-69f7b0c  TASK-025: проверка 5 (prosecdef=false) подтверждена в SQL Editor
-75d746e  docs: добавить Документ1.pdf (письмо консультанта по блоку G)
-a7cb53c  TASK-025: живые проверки 0010 пройдены (режим invoker, скрытие с ответом)
-63addc5  TASK-025: 0010 SQL Editor, source_url, скрины G0
-5728c59  Блок G (короткий): бриф, TASK-025 активен, черновики 026-027
+git log --oneline origin/main..HEAD
 ```
 
 Команда для архитектора (на Windows, не из песочницы):
